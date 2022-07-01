@@ -38,7 +38,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
 
     old_subdir = subdirs[0]
-    subdir = 'jetgraphs'
+    subdir = 'jetgraph_files'
     self.dataset_name = old_subdir.split('/')[-1]
     os.rename(osp.join(self.raw_dir, old_subdir), osp.join(self.raw_dir, subdir))
     
