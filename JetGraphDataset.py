@@ -158,7 +158,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   @property
   def processed_file_names(self):
     try:
-      return ['jet_graph_processed_'+self.dataset]
+      return ['jet_graph_processed_'+self.dataset_name]
     except:
       return []
     
