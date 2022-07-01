@@ -30,11 +30,17 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     
 
   def process(self):
-    
-    subdir = 'fjlcondataset10k_clean' # 'raw_dir' if self.version == 'v1' else 'fjlcondataset10k_clean'
+
+    subdir = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir,x))]
+    if len(subdir) > 1:
+      raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdir}')
+
+    self.dataset_version = subdir.split('/')[-1]
+    print(self.dataset_version)
+
     raw_dir = osp.join(self.raw_dir, subdir)
     if not osp.exists(raw_dir):
-      raise FileNotFoundError(f'{raw_dir} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the direcotry tree is correctly organized and delete it if necessary.')
+      raise FileNotFoundError(f'{raw_dir} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the directory tree is correctly organized and delete it if necessary.')
     filenames = [osp.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith('jet') and f.endswith('.gml')]
     
     # Read all graphs into data list, converting one by one (they should fit in memory).
@@ -142,10 +148,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   @property
   def raw_file_names(self):
-    return ['fjlcondataset10k_clean'] #['raw_dir'] if self.version == 'v1' else ['fjlcondataset10k_clean']
+    return [self.dataset_version] #['raw_dir'] if self.version == 'v1' else ['fjlcondataset10k_clean']
 
 
   @property
   def processed_file_names(self):
-    processed_file_name = 'jet_graph_processed_'+self.url.split('/')[-2]
+    processed_file_name = 'jet_graph_processed_'+self.dataset_version
     return [processed_file_name]
