@@ -20,18 +20,16 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     self.subset = subset
     super().__init__(root, transform, pre_transform, pre_filter)
     
-    self.data, self.slices, self.dataset_name, subset = torch.load(self.processed_paths[0])
+    self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
     if subset != self.subset:
       self.process()
+      self.dataset_name = dataset_name
  
-
-
 
   def download(self):
     # Download to `self.raw_dir`.
     url = self.url
     download_url(url, self.raw_dir)
-    # Due to zip file structure, extraction will be in directory self.raw_dir/raw_dir
     extract_zip(osp.join(self.raw_dir, 'download'), self.raw_dir)
     
 
@@ -41,14 +39,11 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     if len(subdirs) > 1:
       raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdir}')
 
-
     old_subdir = subdirs[0]
     subdir = 'jetgraph_files'
     self.dataset_name = old_subdir.split('/')[-1]
     os.rename(osp.join(self.raw_dir, old_subdir), osp.join(self.raw_dir, subdir))
     
-    
-
     raw_dir = osp.join(self.raw_dir, subdir)
     if not osp.exists(raw_dir):
       raise FileNotFoundError(f'{raw_dir} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the directory tree is correctly organized and delete it if necessary.')
