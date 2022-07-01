@@ -35,8 +35,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     if len(subdir) > 1:
       raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdir}')
 
-    print(subdir)
-
+    subdir = subdir[0]
     self.dataset_name = subdir.split('/')[-1]
     print(self.dataset_name)
 
