@@ -17,7 +17,6 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   def __init__(self, url, root, subset=False, transform=None, pre_transform=None, pre_filter=None):
     self.url = url
     self.subset = subset
-    self.perform_cleaning = perform_cleaning
     super().__init__(root, transform, pre_transform, pre_filter)
     
     self.data, self.slices = torch.load(self.processed_paths[0])
