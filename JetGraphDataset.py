@@ -14,9 +14,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   Dataset containing samples of jetgraphs. 
   """
 
-  def __init__(self, url, root, subset=False, transform=None, pre_transform=None, pre_filter=None):
+  def __init__(self, url, root, subset=False, perform_cleaning=False, transform=None, pre_transform=None, pre_filter=None):
     self.url = url
     self.subset = subset
+    self.perform_cleaning = perform_cleaning
     super().__init__(root, transform, pre_transform, pre_filter)
     
     self.data, self.slices = torch.load(self.processed_paths[0])
@@ -66,16 +67,17 @@ class JetGraphDatasetInMemory(InMemoryDataset):
       new_graph = nx.MultiGraph(new_graph)
       
       # Check that graph structure makes sense, if not, exclude it.
-      if len(new_graph.edges) > 0 and len(new_graph.nodes) > 0:
-        data = from_networkx(new_graph, group_node_attrs = all, group_edge_attrs = all)
-        data.y = int(new_graph.graph['y'])
-        data_list.append(data)
-      elif len(new_graph.edges) == 0:
-        graphs_without_edges += 1
-        signal_graphs_without_edges += int(new_graph.graph['y'])
-      elif len(new_graph.nodes) == 0:
-        graphs_without_nodes += 1
-        signal_graphs_without_nodes += int(new_graph.graph['y'])
+      if self.perform_cleaning:
+        if len(new_graph.edges) > 0 and len(new_graph.nodes) > 0:
+          data = from_networkx(new_graph, group_node_attrs = all, group_edge_attrs = all)
+          data.y = int(new_graph.graph['y'])
+          data_list.append(data)
+        elif len(new_graph.edges) == 0:
+          graphs_without_edges += 1
+          signal_graphs_without_edges += int(new_graph.graph['y'])
+        elif len(new_graph.nodes) == 0:
+          graphs_without_nodes += 1
+          signal_graphs_without_nodes += int(new_graph.graph['y'])
     
     print(f'Processing finished!')
     print(f'Filtered out {graphs_without_nodes} graphs without nodes, of which {signal_graphs_without_nodes} were signal.')
