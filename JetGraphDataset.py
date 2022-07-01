@@ -19,7 +19,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     self.subset = subset
     super().__init__(root, transform, pre_transform, pre_filter)
     
-    self.data, self.slices, subset = torch.load(self.processed_paths[0])
+    self.data, self.slices, self.dataset_name, subset = torch.load(self.processed_paths[0])
     if subset != self.subset:
       print('FUCK')
 
@@ -60,7 +60,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
       # First 50% is signal, second 50% is noise.
       ignore = initial_num_graphs - num_graphs
       filenames = filenames[ignore//2 : -ignore//2]
-      print(f'Selecting {len(filenames)} graphs.')
+      print(f'Selected {len(filenames)} graphs.')
     
     # Read all graphs into data list, converting one by one (they should fit in memory).
     graphs_without_edges, signal_graphs_without_edges = 0, 0
@@ -97,7 +97,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
     # Save obtained torch tensor for later use.
     data, slices = self.collate(data_list)
-    torch.save((data, slices, subset), self.processed_paths[0])
+    torch.save((data, slices, self.dataset_name, self.subset), self.processed_paths[0])
 
   
   # AUXILIARY FUNCTIONS
