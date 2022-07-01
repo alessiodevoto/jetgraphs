@@ -2,6 +2,7 @@ import os
 import os.path as osp
 import random
 from tqdm import tqdm
+import warnings
 
 import torch
 import networkx as nx
@@ -21,7 +22,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     
     self.data, self.slices, self.dataset_name, subset = torch.load(self.processed_paths[0])
     if subset != self.subset:
-      print('FUCK')
+      self.process()
+ 
 
 
 
