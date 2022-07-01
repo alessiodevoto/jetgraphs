@@ -11,16 +11,11 @@ from torch_geometric.utils.convert import from_networkx
 
 class JetGraphDatasetInMemory(InMemoryDataset):
   """
-  Dataset containing samples of jetgraphs.
-  Two versions are available, you can pick one via the 'version' argument. 
+  Dataset containing samples of jetgraphs. 
   """
-  
-  urls = {'v1' : 'https://cernbox.cern.ch/index.php/s/rZDyJFBVVyyIIFK/download',
-          'v2' : 'https://cernbox.cern.ch/index.php/s/UpFEq9DJrqHNmpe/download'}
 
-  def __init__(self, root, transform=None, pre_transform=None, pre_filter=None, version = 'v2'):
-    assert version in self.urls.keys(), 'version not supported'
-    self.version = version
+  def __init__(self, url, root, transform=None, pre_transform=None, pre_filter=None):
+    self.url = url
     super().__init__(root, transform, pre_transform, pre_filter)
     
     self.data, self.slices = torch.load(self.processed_paths[0])
@@ -28,7 +23,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   def download(self):
     # Download to `self.raw_dir`.
-    url = self.urls[self.version]
+    url = self.url
     download_url(url, self.raw_dir)
     # Due to zip file structure, extraction will be in directory self.raw_dir/raw_dir
     extract_zip(osp.join(self.raw_dir, 'download'), self.raw_dir)
@@ -36,7 +31,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   def process(self):
     
-    subdir = 'raw_dir' if self.version == 'v1' else 'fjlcondataset10k_clean'
+    subdir = 'fjlcondataset10k_clean' # 'raw_dir' if self.version == 'v1' else 'fjlcondataset10k_clean'
     raw_dir = osp.join(self.raw_dir, subdir)
     if not osp.exists(raw_dir):
       raise FileNotFoundError(f'{raw_dir} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the direcotry tree is correctly organized and delete it if necessary.')
@@ -147,9 +142,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   @property
   def raw_file_names(self):
-    return ['raw_dir'] if self.version == 'v1' else ['fjlcondataset10k_clean']
+    return ['fjlcondataset10k_clean'] #['raw_dir'] if self.version == 'v1' else ['fjlcondataset10k_clean']
 
 
   @property
   def processed_file_names(self):
-    return ['jet_graph_processed_v1.pt'] if self.version == 'v1' else ['jet_graph_processed_v2.pt']
+    processed_file_name = 'jet_graph_processed_'+self.url.split('/')[-2]
+    return [processed_file_name]
