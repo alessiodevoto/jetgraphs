@@ -14,8 +14,9 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   Dataset containing samples of jetgraphs. 
   """
 
-  def __init__(self, url, root, transform=None, pre_transform=None, pre_filter=None):
+  def __init__(self, url, root, subset=False, transform=None, pre_transform=None, pre_filter=None):
     self.url = url
+    self.subset = subset
     super().__init__(root, transform, pre_transform, pre_filter)
     
     self.data, self.slices = torch.load(self.processed_paths[0])
@@ -43,11 +44,21 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     if not osp.exists(raw_dir):
       raise FileNotFoundError(f'{raw_dir} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the directory tree is correctly organized and delete it if necessary.')
     filenames = [osp.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith('jet') and f.endswith('.gml')]
+
+    # Select subset of filenames, if necessary.
+    if self.subset:
+      initial_num_graphs = len(filenames)
+      num_graphs = int((int(self.subset[:-1]) / 100 ) *  initial_num_graphs)
+      print(f'Extracting {num_graphs} graphs from the initial {initial_num_graphs}.')
+      # First 50% is signal, second 50% is noise
+      ignore = initial_num_graphs - num_graphs
+      filenames = filenames[ignore/2 : -ignore/2]
+      print(f'Extracted {len(filenames)} graphs.')
     
     # Read all graphs into data list, converting one by one (they should fit in memory).
     graphs_without_edges, signal_graphs_without_edges = 0, 0
     graphs_without_nodes, signal_graphs_without_nodes  = 0, 0
-    
+
     data_list = []
     for graph_file in tqdm(filenames):
       # Read graph into networkx object.
