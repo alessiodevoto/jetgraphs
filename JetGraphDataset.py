@@ -14,7 +14,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   Dataset containing samples of jetgraphs. 
   """
 
-  def __init__(self, url, root, subset=False, perform_cleaning=False, transform=None, pre_transform=None, pre_filter=None):
+  def __init__(self, url, root, subset=False, transform=None, pre_transform=None, pre_filter=None):
     self.url = url
     self.subset = subset
     self.perform_cleaning = perform_cleaning
@@ -33,13 +33,16 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   def process(self):
 
-    subdir = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir,x))]
-    if len(subdir) > 1:
+    subdirs = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir,x))]
+    if len(subdirs) > 1:
       raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdir}')
 
-    subdir = subdir[0]
-    self.dataset_name = subdir.split('/')[-1]
-    print(self.dataset_name)
+
+    old_subdir = subdirs[0]
+    self.dataset_name = old_subdir.split('/')[-1]
+    os.rename(old_subdir, osp.join(self.raw_dir, 'jetgraphs'))
+    
+    
 
     raw_dir = osp.join(self.raw_dir, subdir)
     if not osp.exists(raw_dir):
@@ -67,22 +70,21 @@ class JetGraphDatasetInMemory(InMemoryDataset):
       new_graph = nx.MultiGraph(new_graph)
       
       # Check that graph structure makes sense, if not, exclude it.
-      if self.perform_cleaning:
-        if len(new_graph.edges) > 0 and len(new_graph.nodes) > 0:
-          data = from_networkx(new_graph, group_node_attrs = all, group_edge_attrs = all)
-          data.y = int(new_graph.graph['y'])
-          data_list.append(data)
-        elif len(new_graph.edges) == 0:
-          graphs_without_edges += 1
-          signal_graphs_without_edges += int(new_graph.graph['y'])
-        elif len(new_graph.nodes) == 0:
-          graphs_without_nodes += 1
-          signal_graphs_without_nodes += int(new_graph.graph['y'])
+      if len(new_graph.edges) > 0 and len(new_graph.nodes) > 0:
+        data = from_networkx(new_graph, group_node_attrs = all, group_edge_attrs = all)
+        data.y = int(new_graph.graph['y'])
+        data_list.append(data)
+      elif len(new_graph.edges) == 0:
+        graphs_without_edges += 1
+        signal_graphs_without_edges += int(new_graph.graph['y'])
+      elif len(new_graph.nodes) == 0:
+        graphs_without_nodes += 1
+        signal_graphs_without_nodes += int(new_graph.graph['y'])
     
-    print(f'Processing finished!')
+    
     print(f'Filtered out {graphs_without_nodes} graphs without nodes, of which {signal_graphs_without_nodes} were signal.')
     print(f'Filtered out {graphs_without_edges} graphs without edges, of which {signal_graphs_without_edges} were signal.')
-
+    print(f'Processing finished!')
 
     if self.pre_filter is not None:
         data_list = [data for data in data_list if self.pre_filter(data)]
@@ -166,16 +168,11 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   @property
   def raw_file_names(self):
-    try:
-      return [self.dataset_name]
-    except:
-      return []
+    return ['jetgraphs']
 
 
   @property
   def processed_file_names(self):
-    try:
-      return ['jet_graph_processed_'+self.dataset_name+'.pt']
-    except:
-      return []
+    return ['jet_graph_processed_.pt']
+
     
