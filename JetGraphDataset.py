@@ -19,7 +19,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     self.subset = subset
     super().__init__(root, transform, pre_transform, pre_filter)
     
-    self.data, self.slices = torch.load(self.processed_paths[0])
+    self.data, self.slices, subset = torch.load(self.processed_paths[0])
+    if subset != self.subset:
+      print('FUCK')
+
 
 
   def download(self):
@@ -52,12 +55,12 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     # Select subset of filenames, if necessary.
     if self.subset:
       initial_num_graphs = len(filenames)
-      num_graphs = int((int(self.subset[:-1]) / 100 ) *  initial_num_graphs)
-      print(f'Extracting {num_graphs} graphs from the initial {initial_num_graphs}.')
-      # First 50% is signal, second 50% is noise
+      num_graphs = int((float(self.subset[:-1]) / 100 ) *  initial_num_graphs)
+      print(f'Selecting {num_graphs} graphs from the initial {initial_num_graphs}.')
+      # First 50% is signal, second 50% is noise.
       ignore = initial_num_graphs - num_graphs
       filenames = filenames[ignore//2 : -ignore//2]
-      print(f'Extracted {len(filenames)} graphs.')
+      print(f'Selecting {len(filenames)} graphs.')
     
     # Read all graphs into data list, converting one by one (they should fit in memory).
     graphs_without_edges, signal_graphs_without_edges = 0, 0
@@ -94,7 +97,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
     # Save obtained torch tensor for later use.
     data, slices = self.collate(data_list)
-    torch.save((data, slices), self.processed_paths[0])
+    torch.save((data, slices, subset), self.processed_paths[0])
 
   
   # AUXILIARY FUNCTIONS
