@@ -52,7 +52,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
       print(f'Extracting {num_graphs} graphs from the initial {initial_num_graphs}.')
       # First 50% is signal, second 50% is noise
       ignore = initial_num_graphs - num_graphs
-      filenames = filenames[ignore/2 : -ignore/2]
+      filenames = filenames[ignore//2 : -ignore//2]
       print(f'Extracted {len(filenames)} graphs.')
     
     # Read all graphs into data list, converting one by one (they should fit in memory).
@@ -110,12 +110,16 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   # PROPERTIES
   @property
   def is_undirected(self):
-    return all(g.is_undirected() for g in self)
+    # for now it is undirected and we know it
+    return True
+    # return all(g.is_undirected() for g in self)
   
 
   @property
   def is_directed(self):
-    return all(g.is_directed() for g in self)
+    # for now it is undirected and we know it
+    return False
+    # return all(g.is_directed() for g in self)
   
 
   @property
@@ -169,7 +173,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   @property
   def processed_file_names(self):
     try:
-      return ['jet_graph_processed_'+self.dataset_name]
+      return ['jet_graph_processed_'+self.dataset_name+'.pt']
     except:
       return []
     
