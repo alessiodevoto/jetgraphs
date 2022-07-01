@@ -23,7 +23,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
     if subset != self.subset:
       self.process()
-      self.dataset_name = dataset_name
+    
+    self.dataset_name = dataset_name
  
 
   def download(self):
