@@ -168,7 +168,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   @property
   def raw_file_names(self):
-    return ['jetgraphs']
+    return ['jetgraph_files']
 
 
   @property
