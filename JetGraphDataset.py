@@ -35,8 +35,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     if len(subdir) > 1:
       raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdir}')
 
-    self.dataset_version = subdir.split('/')[-1]
-    print(self.dataset_version)
+    self.dataset_name = subdir.split('/')[-1]
+    print(self.dataset_name)
 
     raw_dir = osp.join(self.raw_dir, subdir)
     if not osp.exists(raw_dir):
@@ -148,10 +148,18 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
   @property
   def raw_file_names(self):
-    return [self.dataset_version] #['raw_dir'] if self.version == 'v1' else ['fjlcondataset10k_clean']
+    try:
+      dataset = self.dataset_name
+    except:
+      dataset = None
+    return [dataset] 
 
 
   @property
   def processed_file_names(self):
-    processed_file_name = 'jet_graph_processed_'+self.dataset_version
+    try:
+      dataset = self.dataset_name
+    except:
+      dataset = None
+    processed_file_name = 'jet_graph_processed_'+self.dataset
     return [processed_file_name]
