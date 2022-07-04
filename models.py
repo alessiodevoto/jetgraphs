@@ -45,9 +45,7 @@ class BaseJetGraphGCN(LightningModule):
   def training_step(self, batch, batch_idx):
     out = self(batch)  # Perform a single forward pass.
     loss = self.loss(out, batch.y.unsqueeze(1).float())  # Compute the loss.
-    loss.backward()  # Derive gradients.
     
-
     self.log('train_loss', loss, on_epoch=True)
     return loss
 
