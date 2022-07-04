@@ -13,7 +13,7 @@ from torch_geometric.nn import LayerNorm, BatchNorm
 from torch_geometric.nn import GCNConv, GATConv
 from torch_geometric.nn import global_mean_pool
 
-
+from abc import abstractmethod
 
 class BaseJetGraphGCN(LightningModule):
 
