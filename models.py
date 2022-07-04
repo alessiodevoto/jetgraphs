@@ -8,6 +8,7 @@ from torch_geometric.nn import global_mean_pool
 from pytorch_lightning import LightningModule
 
 from sklearn import metrics
+import numpy as np
 
 from torch.optim import Adam
 from torch.nn import Linear
