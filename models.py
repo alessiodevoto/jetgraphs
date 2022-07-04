@@ -25,7 +25,7 @@ class BaseJetGraphGCN(LightningModule):
     
     # Network structure.
     self.hidden_channels = hidden_channels
-    self.node_feat_size = node_feat_size if node_feat_size else default_node_features
+    self.node_features_size = node_feat_size if node_feat_size else default_node_features
 
     # Loss.
     self.loss = loss_func
