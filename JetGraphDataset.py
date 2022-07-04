@@ -100,7 +100,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
   
   # AUXILIARY FUNCTIONS
   def stats(self):
-    print('\n*** JetGraph Dataset ***\n')
+    print(f'\n*** JetGraph Dataset version:{self.dataset_name} ***\n')
+
     print(f'Number of classes: {self.num_classes}')
     print(f'Number of graphs: {len(self)}')
     print(f'Dataset is undirected: {self.is_undirected}')
