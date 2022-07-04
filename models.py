@@ -41,7 +41,7 @@ class BaseJetGraphGCN(LightningModule):
 
   def training_step(self, batch, batch_idx):
     out = self(batch)  # Perform a single forward pass.
-    loss = criterion(out, batch.y.unsqueeze(1).float())  # Compute the loss.
+    loss = self.loss(out, batch.y.unsqueeze(1).float())  # Compute the loss.
     loss.backward()  # Derive gradients.
     optimizer.step()  # Update parameters based on gradients.
     optimizer.zero_grad()  # Clear gradients.
@@ -55,7 +55,7 @@ class BaseJetGraphGCN(LightningModule):
     labels = batch.y.unsqueeze(1).float()
     
     # Loss.
-    loss = criterion(out, labels)  # Compute the loss.
+    loss = self.loss(out, labels)  # Compute the loss.
     # Accuracy.
     acc = metrics.accuracy_score(labels, np.round(predictions))
     # F1 score.
