@@ -112,7 +112,7 @@ class Shallow_GCN(BaseJetGraphGCN):
 
 class Residual_GCN(BaseJetGraphGCN):
   def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss()):
-    super(Residual_GCN, self)..__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
+    super(Residual_GCN, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
     torch.manual_seed(12345)
     node_features_size = node_feat_size if node_feat_size else jet_graph_dataset.num_node_features
     self.norm = BatchNorm(node_features_size)
@@ -151,7 +151,7 @@ class Residual_GCN(BaseJetGraphGCN):
 
 class Cheb(BaseJetGraphGCN):
   def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss()):
-    super(Cheb, self)..__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
+    super(Cheb, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
     torch.manual_seed(12345)
     self.norm = BatchNorm(self.num_node_features)
     self.conv1 = ChebConv(self.num_node_features, self.hidden_channels, K=4)
@@ -189,7 +189,7 @@ class Cheb(BaseJetGraphGCN):
 
 class Arma(BaseJetGraphGCN):
   def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss()):
-    super(Arma, self)..__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
+    super(Arma, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
     torch.manual_seed(12345)
     self.norm = BatchNorm(self.num_node_features)
     self.conv1 = ARMAConv(self.num_node_features, self.hidden_channels)
@@ -224,7 +224,7 @@ class Arma(BaseJetGraphGCN):
 
 class Residual_GAT(BaseJetGraphGCN):
   def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss(), heads=1):
-    super(Residual_GAT, self)..__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
+    super(Residual_GAT, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
     torch.manual_seed(12345)
     self.norm = BatchNorm(self.num_node_features)
     self.norm_residual = BatchNorm(self.hidden_channels)
@@ -263,7 +263,7 @@ class Residual_GAT(BaseJetGraphGCN):
 
 class GAT(BaseJetGraphGCN):
   def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss(), heads=1):
-    super(GAT, self)..__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
+    super(GAT, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
     torch.manual_seed(12345)
     self.norm = BatchNorm(self.num_node_features)
     self.conv1 = GATConv(self.num_node_features, self.hidden_channels, concat=False, heads=heads)
