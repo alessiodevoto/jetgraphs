@@ -15,6 +15,8 @@ from torch_geometric.nn import global_mean_pool
 
 from abc import abstractmethod
 
+default_node_features = 4
+
 class BaseJetGraphGCN(LightningModule):
 
   def __init__(self,hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss()):
@@ -23,7 +25,7 @@ class BaseJetGraphGCN(LightningModule):
     
     # Network structure.
     self.hidden_channels = hidden_channels
-    self.node_feat_size = node_feat_size if node_feat_size else jet_graph_dataset.num_node_features
+    self.node_feat_size = node_feat_size if node_feat_size else default_node_features
 
     # Loss.
     self.loss = loss_func
@@ -114,7 +116,6 @@ class Residual_GCN(BaseJetGraphGCN):
   def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001, loss_func=torch.nn.BCEWithLogitsLoss()):
     super(Residual_GCN, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size, learning_rate=learning_rate, loss_func=loss_func)
     torch.manual_seed(12345)
-    node_features_size = node_feat_size if node_feat_size else jet_graph_dataset.num_node_features
     self.norm = BatchNorm(node_features_size)
     self.norm_residual = BatchNorm(self.hidden_channels)
     self.conv1 = GCNConv(node_features_size, self.hidden_channels)
