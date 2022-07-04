@@ -7,6 +7,8 @@ from torch_geometric.nn import GCNConv, GATConv, ChebConv, ARMAConv
 from torch_geometric.nn import global_mean_pool
 from pytorch_lightning import LightningModule
 
+from sklearn import metrics
+
 from torch.optim import Adam
 from torch.nn import Linear
 import torch.nn.functional as F
