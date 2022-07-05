@@ -58,8 +58,8 @@ class BaseJetGraphGCN(LightningModule):
 
     def validation_step(self, batch, batch_idx):
         out = self(batch)  # Perform a single forward pass.
-        predictions = torch.sigmoid(out)
-        labels = batch.y.unsqueeze(1).float()
+        predictions = torch.sigmoid(out).detach().cpu().numpy()
+        labels = batch.y.unsqueeze(1).float().detach().cpu().numpy()
 
         print('labels and pred shapes:', labels.shape, predictions.shape)
 
