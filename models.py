@@ -50,14 +50,14 @@ class BaseJetGraphGCN(LightningModule):
         pass
 
     def training_step(self, batch, batch_idx):
-        out = self.model(batch)  # Perform a single forward pass.
+        out = self(batch)  # Perform a single forward pass.
         loss = self.loss(out, batch.y.unsqueeze(1).float())  # Compute the loss.
 
         self.log('train_loss', loss, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        out = self.model(batch)  # Perform a single forward pass.
+        out = self(batch)  # Perform a single forward pass.
         predictions = torch.sigmoid(out)
         labels = batch.y.unsqueeze(1).float()
 
