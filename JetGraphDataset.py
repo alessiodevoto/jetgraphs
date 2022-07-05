@@ -110,6 +110,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         print(f'Average number of nodes per graph: {self.avg_nodes_per_graph:.2f}')
         print(f'Average number of edges per graph: {self.avg_edges_per_graph:.2f}')
         print(f'Average number of layers per graph: {self.avg_layers_per_graph:.2f}')
+        print(f'Number of positive samples:{self.num_positive_samples:.2f}' )
 
     # PROPERTIES
     @property
@@ -167,3 +168,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     @property
     def processed_file_names(self):
         return ['jet_graph_processed_.pt']
+
+    @property
+    def num_positive_samples(self):
+        return sum([x.y for x in self])
