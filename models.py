@@ -286,13 +286,13 @@ class Residual_GAT(BaseJetGraphGCN):
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index, edge_attr==edge_attr)
+        x = self.conv1(x, edge_index, edge_attr=edge_attr)
         x = self.norm_residual(x.relu() + x)
-        x = self.conv2(x, edge_index, edge_attr==edge_attr)
+        x = self.conv2(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index, edge_attr==edge_attr)
+        x = self.conv3(x, edge_index, edge_attr=edge_attr)
         x = self.norm_residual(x.relu() + x)
-        x = self.conv4(x, edge_index, edge_attr==edge_attr)
+        x = self.conv4(x, edge_index, edge_attr=edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -330,13 +330,18 @@ class GAT(BaseJetGraphGCN):
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index, edge_attr==edge_attr)
+        print(x.shape)
+        x = self.conv1(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        x = self.conv2(x, edge_index, edge_attr==edge_attr)
+        print(x.shape)
+        x = self.conv2(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index, edge_attr==edge_attr)
+        print(x.shape)
+        x = self.conv3(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        x = self.conv4(x, edge_index, edge_attr==edge_attr)
+        print(x.shape)
+        x = self.conv4(x, edge_index, edge_attr=edge_attr)
+        print(x.shape)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
