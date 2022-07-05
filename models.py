@@ -83,10 +83,14 @@ class BaseJetGraphGCN(LightningModule):
 
 
 class Shallow_GCN(BaseJetGraphGCN):
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self,
+                 hidden_channels,
+                 node_feat_size=None,
+                 learning_rate=0.001,
+                 use_edge_attr=False,
                  loss_func=torch.nn.BCEWithLogitsLoss()):
         super(Shallow_GCN, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size,
-                                          learning_rate=learning_rate, loss_func=loss_func)
+                                          learning_rate=learning_rate, use_edge_attr=use_edge_attr, loss_func=loss_func)
         torch.manual_seed(12345)
 
         self.norm = BatchNorm(self.node_features_size)
@@ -125,10 +129,13 @@ class Shallow_GCN(BaseJetGraphGCN):
 
 
 class Residual_GCN(BaseJetGraphGCN):
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self, hidden_channels,
+                 node_feat_size=None,
+                 learning_rate=0.001,
+                 use_edge_attr=False,
                  loss_func=torch.nn.BCEWithLogitsLoss()):
         super(Residual_GCN, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size,
-                                           learning_rate=learning_rate, loss_func=loss_func)
+                                           learning_rate=learning_rate,use_edge_attr=use_edge_attr, loss_func=loss_func)
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.node_features_size)
         self.norm_residual = BatchNorm(self.hidden_channels)
@@ -167,10 +174,14 @@ class Residual_GCN(BaseJetGraphGCN):
 
 
 class Cheb(BaseJetGraphGCN):
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self,
+                 hidden_channels,
+                 node_feat_size=None,
+                 learning_rate=0.001,
+                 use_edge_attr=False,
                  loss_func=torch.nn.BCEWithLogitsLoss()):
         super(Cheb, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size,
-                                   learning_rate=learning_rate, loss_func=loss_func)
+                                   learning_rate=learning_rate,use_edge_attr=use_edge_attr, loss_func=loss_func)
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.num_node_features)
         self.conv1 = ChebConv(self.num_node_features, self.hidden_channels, K=4)
@@ -207,10 +218,14 @@ class Cheb(BaseJetGraphGCN):
 
 
 class Arma(BaseJetGraphGCN):
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self,
+                 hidden_channels,
+                 node_feat_size=None,
+                 learning_rate=0.001,
+                 use_edge_attr=False,
                  loss_func=torch.nn.BCEWithLogitsLoss()):
         super(Arma, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size,
-                                   learning_rate=learning_rate, loss_func=loss_func)
+                                   learning_rate=learning_rate, use_edge_attr=use_edge_attr, loss_func=loss_func)
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.num_node_features)
         self.conv1 = ARMAConv(self.num_node_features, self.hidden_channels)
@@ -244,10 +259,14 @@ class Arma(BaseJetGraphGCN):
 
 
 class Residual_GAT(BaseJetGraphGCN):
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self,
+                 hidden_channels,
+                 node_feat_size=None,
+                 learning_rate=0.001,
+                 use_edge_attr=False,
                  loss_func=torch.nn.BCEWithLogitsLoss(), heads=1):
         super(Residual_GAT, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size,
-                                           learning_rate=learning_rate, loss_func=loss_func)
+                                           learning_rate=learning_rate, use_edge_attr=use_edge_attr,loss_func=loss_func)
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.num_node_features)
         self.norm_residual = BatchNorm(self.hidden_channels)
@@ -285,10 +304,14 @@ class Residual_GAT(BaseJetGraphGCN):
 
 
 class GAT(BaseJetGraphGCN):
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self,
+                 hidden_channels,
+                 node_feat_size=None,
+                 learning_rate=0.001,
+                 use_edge_attr=False,
                  loss_func=torch.nn.BCEWithLogitsLoss(), heads=1):
         super(GAT, self).__init__(hidden_channels=hidden_channels, node_feat_size=node_feat_size,
-                                  learning_rate=learning_rate, loss_func=loss_func)
+                                  learning_rate=learning_rate, use_edge_attr=use_edge_attr, loss_func=loss_func)
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.num_node_features)
         self.conv1 = GATConv(self.num_node_features, self.hidden_channels, concat=False, heads=heads)
@@ -327,16 +350,18 @@ class GAT(BaseJetGraphGCN):
 # Function to instantiate one of the available models.
 def make_model(cfg):
     m = cfg['model']
+    use_edge_attr = bool(int(cfg['use_edge_attributes']))
+
     assert m in ['gnn', 'gat', 'cheb', 'res_gat', 'res_gnn', 'arma'], 'Model not available.'
     if m == 'gnn':
-        return Shallow_GCN(cfg['hidden_layers'])
+        return Shallow_GCN(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'gat':
-        return GAT(cfg['hidden_layers'], cfg['attention_heads'])
+        return GAT(cfg['hidden_layers'], cfg['attention_heads'], use_edge_attr=use_edge_attr)
     elif m == 'cheb':
-        return Cheb(cfg['hidden_layers'])
+        return Cheb(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'res_gat':
-        return Residual_GAT(cfg['hidden_layers'])
+        return Residual_GAT(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'res_gnn':
-        return Residual_GCN(cfg['hidden_layers'])
+        return Residual_GCN(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'arma':
-        return Arma(cfg['hidden_layers'])
+        return Arma(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
