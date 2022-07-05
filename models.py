@@ -355,14 +355,14 @@ def make_model(cfg):
 
     assert m in ['gnn', 'gat', 'cheb', 'res_gat', 'res_gnn', 'arma'], 'Model not available.'
     if m == 'gnn':
-        return Shallow_GCN(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
+        return Shallow_GCN(hidden_channels=cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'gat':
-        return GAT(cfg['hidden_layers'], cfg['attention_heads'], use_edge_attr=use_edge_attr)
+        return GAT(hidden_channels=cfg['hidden_layers'], heads=cfg['attention_heads'], use_edge_attr=use_edge_attr)
     elif m == 'cheb':
-        return Cheb(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
+        return Cheb(hidden_channels=cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'res_gat':
-        return Residual_GAT(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
+        return Residual_GAT(hidden_channels=cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'res_gnn':
-        return Residual_GCN(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
+        return Residual_GCN(hidden_channels=cfg['hidden_layers'], use_edge_attr=use_edge_attr)
     elif m == 'arma':
-        return Arma(cfg['hidden_layers'], use_edge_attr=use_edge_attr)
+        return Arma(hidden_channels=cfg['hidden_layers'], use_edge_attr=use_edge_attr)
