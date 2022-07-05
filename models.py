@@ -271,10 +271,10 @@ class Residual_GAT(BaseJetGraphGCN):
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.node_features_size)
         self.norm_residual = BatchNorm(self.hidden_channels)
-        self.conv1 = GATConv(self.node_features_size, self.hidden_channels, concat=False, heads=heads)
-        self.conv2 = GATConv(self.hidden_channels, self.hidden_channels, concat=False, heads=heads)
-        self.conv3 = GATConv(self.hidden_channels, self.hidden_channels, concat=False, heads=heads)
-        self.conv4 = GATConv(self.hidden_channels, self.hidden_channels, concat=False, heads=heads)
+        self.conv1 = GATConv(self.node_features_size, self.hidden_channels, edge_dim=1, concat=False, heads=heads)
+        self.conv2 = GATConv(self.hidden_channels, self.hidden_channels,edge_dim=1, concat=False, heads=heads)
+        self.conv3 = GATConv(self.hidden_channels, self.hidden_channels, edge_dim=1,concat=False, heads=heads)
+        self.conv4 = GATConv(self.hidden_channels, self.hidden_channels,edge_dim=1, concat=False, heads=heads)
         self.lin = Linear(self.hidden_channels, 1)
 
     def forward(self, mini_batch):
@@ -315,10 +315,10 @@ class GAT(BaseJetGraphGCN):
                                   learning_rate=learning_rate, use_edge_attr=use_edge_attr, loss_func=loss_func)
         torch.manual_seed(12345)
         self.norm = BatchNorm(self.node_features_size)
-        self.conv1 = GATConv(self.node_features_size, self.hidden_channels, concat=False, heads=heads)
-        self.conv2 = GATConv(self.hidden_channels, self.hidden_channels, concat=False, heads=heads)
-        self.conv3 = GATConv(self.hidden_channels, self.hidden_channels, concat=False, heads=heads)
-        self.conv4 = GATConv(self.hidden_channels, self.hidden_channels, concat=False, heads=heads)
+        self.conv1 = GATConv(self.node_features_size, self.hidden_channels,edge_dim=1, concat=False, heads=heads)
+        self.conv2 = GATConv(self.hidden_channels, self.hidden_channels,edge_dim=1, concat=False, heads=heads)
+        self.conv3 = GATConv(self.hidden_channels, self.hidden_channels,edge_dim=1, concat=False, heads=heads)
+        self.conv4 = GATConv(self.hidden_channels, self.hidden_channels, edge_dim=1,concat=False, heads=heads)
         self.lin = Linear(self.hidden_channels, 1)
 
     def forward(self, mini_batch):
