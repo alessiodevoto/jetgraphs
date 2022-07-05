@@ -330,18 +330,13 @@ class GAT(BaseJetGraphGCN):
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        print(x.shape)
         x = self.conv1(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        print(x.shape)
         x = self.conv2(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        print(x.shape)
         x = self.conv3(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
-        print(x.shape)
         x = self.conv4(x, edge_index, edge_attr=edge_attr)
-        print(x.shape)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
