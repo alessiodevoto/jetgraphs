@@ -24,7 +24,11 @@ default_node_features = 4
 
 class BaseJetGraphGCN(LightningModule):
 
-    def __init__(self, hidden_channels, node_feat_size=None, learning_rate=0.001,
+    def __init__(self,
+                 hidden_channels,
+                 node_feat_size=None,
+                 use_edge_attr=False,
+                 learning_rate=0.001,
                  loss_func=torch.nn.BCEWithLogitsLoss()):
         super(BaseJetGraphGCN, self).__init__()
         torch.manual_seed(12345)
@@ -32,6 +36,7 @@ class BaseJetGraphGCN(LightningModule):
         # Network structure.
         self.hidden_channels = hidden_channels
         self.node_features_size = node_feat_size if node_feat_size else default_node_features
+        self.use_edge_attr = use_edge_attr
 
         # Loss.
         self.loss = loss_func
@@ -95,17 +100,19 @@ class Shallow_GCN(BaseJetGraphGCN):
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
 
+        edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
+
         # 1. Apply Batch normalization
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv4(x, edge_index)
+        x = self.conv4(x, edge_index, edge_weight=edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -135,17 +142,19 @@ class Residual_GCN(BaseJetGraphGCN):
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
 
+        edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
+
         # 1. Apply Batch normalization
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_weight=edge_attr)
         x = self.norm_residual(x.relu() + x)
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_weight=edge_attr)
         x = self.norm_residual(x.relu() + x)
-        x = self.conv4(x, edge_index)
+        x = self.conv4(x, edge_index, edge_weight=edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -173,18 +182,19 @@ class Cheb(BaseJetGraphGCN):
     def forward(self, mini_batch):
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
+        edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
 
         # 1. Apply Batch normalization
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv4(x, edge_index)
+        x = self.conv4(x, edge_index, edge_weight=edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -211,16 +221,17 @@ class Arma(BaseJetGraphGCN):
     def forward(self, mini_batch):
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
+        edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
 
         # 1. Apply Batch normalization
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_weight=edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_weight=edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -249,18 +260,19 @@ class Residual_GAT(BaseJetGraphGCN):
     def forward(self, mini_batch):
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
+        edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
 
         # 1. Apply Batch normalization
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_attr==edge_attr)
         x = self.norm_residual(x.relu() + x)
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_attr==edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_attr==edge_attr)
         x = self.norm_residual(x.relu() + x)
-        x = self.conv4(x, edge_index)
+        x = self.conv4(x, edge_index, edge_attr==edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
@@ -288,18 +300,19 @@ class GAT(BaseJetGraphGCN):
     def forward(self, mini_batch):
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
+        edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
 
         # 1. Apply Batch normalization
         x = self.norm(x)
 
         # 2. Obtain node embeddings
-        x = self.conv1(x, edge_index)
+        x = self.conv1(x, edge_index, edge_attr==edge_attr)
         x = x.relu()
-        x = self.conv2(x, edge_index)
+        x = self.conv2(x, edge_index, edge_attr==edge_attr)
         x = x.relu()
-        x = self.conv3(x, edge_index)
+        x = self.conv3(x, edge_index, edge_attr==edge_attr)
         x = x.relu()
-        x = self.conv4(x, edge_index)
+        x = self.conv4(x, edge_index, edge_attr==edge_attr)
 
         # 3. Readout layer
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
