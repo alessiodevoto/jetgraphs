@@ -171,4 +171,4 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
     @property
     def num_positive_samples(self):
-        return sum([x.y for x in self])
+        return sum([x.y.item() for x in self])
