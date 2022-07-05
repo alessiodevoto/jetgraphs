@@ -59,23 +59,22 @@ class BaseJetGraphGCN(LightningModule):
     def validation_step(self, batch, batch_idx):
         out = self(batch)  # Perform a single forward pass.
         predictions = torch.sigmoid(out).detach().cpu().numpy()
-        labels = batch.y.unsqueeze(1).float().detach().cpu().numpy()
+        labels = batch.y.unsqueeze(1).float()
 
         print('labels and pred shapes:', labels.shape, predictions.shape)
 
         # Loss.
         print('*')
         loss = self.loss(out, labels)  # Compute the loss.
-
         # Accuracy.
         print('*')
-        acc = metrics.accuracy_score(labels, np.round(predictions))
+        acc = metrics.accuracy_score(labels.detach().cpu().numpy(), np.round(predictions))
         # F1 score.
         print('*')
-        f1_score = metrics.f1_score(labels, np.round(predictions))
+        f1_score = metrics.f1_score(labels.detach().cpu().numpy(), np.round(predictions))
         # AUC
         print('*')
-        roc_auc = metrics.roc_auc_score(labels, predictions)
+        roc_auc = metrics.roc_auc_score(labels.detach().cpu().numpy(), predictions)
 
         # Log loss and metric
         self.log('val_loss', loss, on_step=False, on_epoch=True)
