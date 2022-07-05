@@ -64,12 +64,17 @@ class BaseJetGraphGCN(LightningModule):
         print('labels and pred shapes:', labels.shape, predictions.shape)
 
         # Loss.
+        print('*')
         loss = self.loss(out, labels)  # Compute the loss.
+
         # Accuracy.
+        print('*')
         acc = metrics.accuracy_score(labels, np.round(predictions))
         # F1 score.
+        print('*')
         f1_score = metrics.f1_score(labels, np.round(predictions))
         # AUC
+        print('*')
         roc_auc = metrics.roc_auc_score(labels, predictions)
 
         # Log loss and metric
