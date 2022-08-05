@@ -23,7 +23,9 @@ default_node_features = 4
 
 
 class BaseJetGraphGCN(LightningModule):
-
+    """
+    Base class to create models to be trained on JetGraphDataset via Pytorch Lightning.
+    """
     def __init__(self,
                  hidden_channels,
                  node_feat_size=None,
@@ -60,7 +62,6 @@ class BaseJetGraphGCN(LightningModule):
         out = self(batch)  # Perform a single forward pass.
         predictions = torch.sigmoid(out).detach().cpu().numpy()
         labels = batch.y.unsqueeze(1).float()
-
 
         # Loss.
         loss = self.loss(out, labels)  # Compute the loss.
@@ -322,14 +323,14 @@ class GAT(BaseJetGraphGCN):
         self.lin = Linear(self.hidden_channels, 1)
 
     def forward(self, mini_batch):
-        # 0. Unbatch elements in mini batch
+        # 0. Unbatch elements in mini batch.
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
         edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
 
-        # 1. Apply Batch normalization
+        # 1. Apply Batch normalization.
         x = self.norm(x)
 
-        # 2. Obtain node embeddings
+        # 2. Obtain node embeddings.
         x = self.conv1(x, edge_index, edge_attr=edge_attr)
         x = x.relu()
         x = self.conv2(x, edge_index, edge_attr=edge_attr)
@@ -338,10 +339,10 @@ class GAT(BaseJetGraphGCN):
         x = x.relu()
         x = self.conv4(x, edge_index, edge_attr=edge_attr)
 
-        # 3. Readout layer
+        # 3. Readout layer.
         x = global_mean_pool(x, batch)  # [batch_size, hidden_channels]
 
-        # 4. Apply a final classifier
+        # 4. Apply a final classifier.w
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin(x)
 

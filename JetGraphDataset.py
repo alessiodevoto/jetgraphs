@@ -13,6 +13,9 @@ from torch_geometric.utils.convert import from_networkx
 class JetGraphDatasetInMemory(InMemoryDataset):
     """
     Dataset containing samples of jetgraphs.
+    :parameter url: a String containing the url to the dataset.
+    :parameter root: where to download (or look for) the dataset.
+    :parameter subset: a String defining the percentage of dataset to be used. e.g. '10.5%'.
     """
 
     def __init__(self, url, root, subset=False, transform=None, pre_transform=None, pre_filter=None):
@@ -34,9 +37,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
     def process(self):
 
+        # Just a bit messy with all dire/subdirs names.
         subdirs = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir, x))]
         if len(subdirs) > 1:
-            raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdir}')
+            raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdirs}')
 
         old_subdir = subdirs[0]
         subdir = 'jetgraph_files'
