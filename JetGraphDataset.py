@@ -38,6 +38,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     def process(self):
 
         # Just a bit messy with all dire/subdirs names.
+        # TODO we should find a clean way to extract this, regardless of the confused file system.
         subdirs = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir, x))]
         if len(subdirs) > 1:
             raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdirs}')
