@@ -16,11 +16,13 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     :parameter url: a String containing the url to the dataset.
     :parameter root: where to download (or look for) the dataset.
     :parameter subset: a String defining the percentage of dataset to be used. e.g. '10.5%'.
+    :parameter min_num_nodes: minimum number of nodes that a graph must have not to be excluded.
     """
 
-    def __init__(self, url, root, subset=False, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(self, url, root, min_num_nodes=1, subset=False, transform=None, pre_transform=None, pre_filter=None):
         self.url = url
         self.subset = subset
+        self.min_num_nodes = min_num_nodes
         super().__init__(root, transform, pre_transform, pre_filter)
 
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
@@ -37,7 +39,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
     def process(self):
 
-        # Just a bit messy with all dire/subdirs names.
+        # Just a bit messy with all dirs/subdirs names.
         # TODO we should find a clean way to extract this, regardless of the confused file system.
         subdirs = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir, x))]
         if len(subdirs) > 1:
@@ -75,7 +77,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
             new_graph = nx.MultiGraph(new_graph)
 
             # Check that graph structure makes sense, if not, exclude it.
-            if len(new_graph.edges) > 0 and len(new_graph.nodes) > 0:
+            if len(new_graph.edges) > 0 and len(new_graph.nodes) >= self.min_num_nodes:
                 data = from_networkx(new_graph, group_node_attrs=all, group_edge_attrs=all)
                 data.y = int(new_graph.graph['y'])
                 data_list.append(data)
@@ -85,7 +87,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
             elif len(new_graph.nodes) == 0:
                 graphs_without_nodes += 1
                 signal_graphs_without_nodes += int(new_graph.graph['y'])
-
+            
+            
         print(
             f'Filtered out {graphs_without_nodes} graphs without nodes, of which {signal_graphs_without_nodes} were signal.')
         print(
@@ -106,16 +109,25 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     def stats(self):
         print(f'\n*** JetGraph Dataset version:{self.dataset_name} ***\n')
 
+        # Static features, should be the same for all datasets.
         print(f'Number of classes: {self.num_classes}')
         print(f'Number of graphs: {len(self)}')
         print(f'Dataset is undirected: {self.is_undirected}')
         print(f'Number of node features: {self.num_features}')
         print(f'Number of edge features: {self.num_edge_features}')
 
+        # Dynamic features, may change from version to version.
         print(f'Average number of nodes per graph: {self.avg_nodes_per_graph:.2f}')
         print(f'Average number of edges per graph: {self.avg_edges_per_graph:.2f}')
         print(f'Average number of layers per graph: {self.avg_layers_per_graph:.2f}')
         print(f'Number of positive samples:{self.num_positive_samples:.2f}' )
+
+        # Advanced stats requiring extra computation time.
+
+
+
+
+
 
     # PROPERTIES
     @property
