@@ -1,16 +1,41 @@
 import networkx as nx
 import numpy as np
+import scipy.sparse as sp
+import torch
 from torch_geometric.utils import to_networkx
-import torch_geometric
-import networkx as nx
-import numpy as np
+from torch_geometric.utils import to_scipy_sparse_matrix
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+# from mpl_toolkits.mplot3d import Axes3D
 
+def connected_components(g, return_subgraphs=False, directed=False):
+    """
+    Compute connected components of graph g.
+    :parameter g : graph to use as Data object.
+    :parameter return_subgraphs : whether to return a list of Data subgraphs.
+    """
+    adj = to_scipy_sparse_matrix(g.edge_index, num_nodes=g.num_nodes)
+    
+    if return_subgraphs:
+        num_components, component = sp.csgraph.connected_components(adj, directed=directed, return_labels=True)
+        _, count = np.unique(component, return_counts=True)
+        subgraphs = []
+        for subset_idx in count.argsort(): 
+            subset = np.in1d(component, subset_idx)
+            subgraph = g.subgraph(torch.from_numpy(subset).to(torch.bool))
+            subgraphs.append(subgraph)
+        return num_components, subgraphs
+    
+    num_components, component = sp.csgraph.connected_components(adj, directed=directed)
+    return num_components
 
 def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5)):
     """
-    Display graph g, assuming optimal distance between node and node size.
+    Display graph g, assuming 4 attributes per node and optimal distance between node and node size.
+    TODO complete this comment
+    :parameter g: graph to plot Data object
+    :parameter node_distance :
+    :parameter diplay_energy_as : options are []
+    :parameter ax : matplotlib axis
     """
 
     # The graph to visualize
