@@ -90,7 +90,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
             
             
         print(
-            f'Filtered out {graphs_without_nodes} graphs without nodes, of which {signal_graphs_without_nodes} were signal.')
+            f'Filtered out {graphs_without_nodes} graphs without less than {self.min_num_nodes} nodes, of which {signal_graphs_without_nodes} were signal.')
         print(
             f'Filtered out {graphs_without_edges} graphs without edges, of which {signal_graphs_without_edges} were signal.')
         print(f'Processing finished!')
@@ -122,7 +122,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         print(f'Average number of layers per graph: {self.avg_layers_per_graph:.2f}')
         print(f'Number of positive samples:{self.num_positive_samples:.2f}' )
 
-        # Advanced stats requiring extra computation time.
+        # TODO Advanced stats requiring extra computation time.
+        # 1. number of subgraphs 
 
 
 
