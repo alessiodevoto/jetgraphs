@@ -123,8 +123,12 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         print(f'Number of positive samples:{self.num_positive_samples:.2f}' )
 
         # TODO Advanced stats requiring extra computation time.
-        # 1. number of subgraphs 
+        # 1. number of subgraphs (i.e. connected components)
+        # 2. main subgraph
+        # 3. subgraph-specific features.
 
+
+        # TODO Add plotting options.
 
 
 
