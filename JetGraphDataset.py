@@ -8,6 +8,7 @@ import torch
 import networkx as nx
 from torch_geometric.data import InMemoryDataset, download_url, extract_zip
 from torch_geometric.utils.convert import from_networkx
+from utils import connected_components
 
 
 class JetGraphDatasetInMemory(InMemoryDataset):
@@ -124,6 +125,9 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
         # TODO Advanced stats requiring extra computation time.
         # 1. number of subgraphs (i.e. connected components)
+        m,s = self.subgraps_stats
+        print(f'Average number of subgraphs per graph:{m:.2f} with std {s:.2f}')
+        
         # 2. main subgraph
         # 3. subgraph-specific features.
 
@@ -194,3 +198,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     @property
     def num_positive_samples(self):
         return sum([x.y.item() for x in self])
+    
+    @property
+    def subgraps_stats(self):
+        subgraphs = [connected_components(g) for g in self]
+        return subgraphs.mean(), subgraphs.std()
