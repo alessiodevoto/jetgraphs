@@ -41,10 +41,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     def process(self):
 
         # Just a bit messy with all dirs/subdirs names.
-        # TODO we should find a clean way to extract this, regardless of the confused file system.
+        """# TODO we should find a clean way to extract this, regardless of the confused organization.
         subdirs = [x for x in os.listdir(self.raw_dir) if osp.isdir(osp.join(self.raw_dir, x))]
         if len(subdirs) > 1:
-            raise RuntimeError(f'More than one subdirectories have been found, but just one is needed: {subdirs}')
+            raise RuntimeError(f'More than one subdirectories found, but just one is needed: {subdirs}')
 
         old_subdir = subdirs[0]
         subdir = 'jetgraph_files'
@@ -55,7 +55,26 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         if not osp.exists(raw_dir):
             raise FileNotFoundError(
                 f'{raw_dir} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the directory tree is correctly organized and delete it if necessary.')
-        filenames = [osp.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith('jet') and f.endswith('.gml')]
+        filenames = [osp.join(raw_dir, f) for f in os.listdir(raw_dir) if f.startswith('jet') and f.endswith('.gml')]"""
+        
+        
+        # The directory tree is a bit messy, so we have to 'walk' to locate the right subdirectory.
+        gen = os.walk(raw_dir)
+        t = next(gen)
+        while(len(t[-1]) < 2 or not t[-1][0].endswith('gml')):
+            t = next(gen)
+        
+        # Found correct subdir, move it to self.raw_dir/jetgraph_files
+        old_subdir = t[0]
+        self.dataset_name = old_subdir.split('/')[-1]
+        os.rename(old_subdir, osp.join(self.raw_dir,'jetgraph_files'))
+
+        jetgraph_files = osp.join(self.raw_dir, 'jetgraph_files')
+        if not osp.exists(jetgraph_files):
+            raise FileNotFoundError(
+                f'{jetgraph_files} not found. Maybe there was an inconsistency between different versions of the same dataset. Make sure the directory tree is correctly organized and delete it if necessary.')
+        filenames = [osp.join(jetgraph_files, f) for f in os.listdir(jetgraph_files) if f.startswith('jet') and f.endswith('.gml')]
+
 
         # Select subset of filenames, if necessary.
         if self.subset:
@@ -125,7 +144,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
         # TODO Advanced stats requiring extra computation time.
         # 1. number of subgraphs (i.e. connected components)
-        m,s = self.subgraps_stats
+        m,s = self.subgraphs_stats
         print(f'Average number of subgraphs per graph:{m:.2f} with std {s:.2f}')
         
         # TODO Add plotting options.
@@ -194,7 +213,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         return sum([x.y.item() for x in self])
     
     @property
-    def subgraps_stats(self):
-        # average number and stanndard deviation of subgraphs per graph. 
+    def subgraphs_stats(self):
+        # average number and standard deviation of subgraphs per graph. 
         subgraphs = torch.tensor([connected_components(g) for g in self]).float()
         return subgraphs.mean(), subgraphs.std()
