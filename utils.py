@@ -56,6 +56,18 @@ class ConnectedComponents(BaseTransform):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.return_subgraphs})'
 
+
+class NumLayers(BaseTransform):
+    """
+    Compute number of layers in a jet graph.
+    """
+    def __call__(self, data: Data) -> Data:
+        data.num_layers = data.x[:, 2].unique().size()[0]
+        return data
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}'
+
 def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5)):
     """
     Display graph g, assuming 4 attributes per node and optimal distance between node and node size.
