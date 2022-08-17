@@ -1,10 +1,15 @@
+import re
 import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 import torch
 from torch_geometric.utils import to_networkx
+from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_scipy_sparse_matrix
 import matplotlib.pyplot as plt
+import torch
+from torch_geometric.data import Data
+
 # from mpl_toolkits.mplot3d import Axes3D
 
 def connected_components(g, return_subgraphs=False, directed=False):
@@ -27,6 +32,29 @@ def connected_components(g, return_subgraphs=False, directed=False):
     
     num_components, component = sp.csgraph.connected_components(adj, directed=directed)
     return num_components
+
+
+class ConnectedComponents(BaseTransform):
+    """
+    Compute connected components of graph g as a Transform.
+    :parameter g : graph to use as Data object.
+    :parameter return_subgraphs : whether to return a list of Data subgraphs.
+    """
+    def __init__(self, return_subgraphs=False, directed=False):
+        self.directed = directed
+        self.return_subgraphs = return_subgraphs
+
+    def __call__(self, data: Data) -> Data:
+        ret_value = connected_components(data, self.return_subgraphs, self.directed)
+        if self.return_subgraphs:
+            data.num_subgraphs = ret_value[0]
+            data.subgraphs = ret_value[1]
+        else:
+            data.num_subgraphs = ret_value
+        return data
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.return_subgraphs})'
 
 def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5)):
     """
