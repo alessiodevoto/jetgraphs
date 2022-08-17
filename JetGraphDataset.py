@@ -137,9 +137,12 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         print(f'Number of edge features: {self.num_edge_features}')
 
         # Dynamic features, may change from version to version.
-        print(f'Average number of nodes per graph: {self.avg_nodes_per_graph:.2f}')
-        print(f'Average number of edges per graph: {self.avg_edges_per_graph:.2f}')
-        print(f'Average number of layers per graph: {self.avg_layers_per_graph:.2f}')
+        m, s = self.edges_per_graph
+        print(f'Average number of nodes per graph: {m:.2f} with std {s:.2f}')
+        m, s = self.nodes_per_graph
+        print(f'Average number of edges per graph: {m:.2f} with std {s:.2f}')
+        m, s = self.layers_per_graph
+        print(f'Average number of layers per graph: {m:.2f} with std {s:.2f}')
         print(f'Number of positive samples:{self.num_positive_samples:.2f}' )
 
         # TODO Advanced stats requiring extra computation time.
@@ -165,31 +168,21 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         # return all(g.is_directed() for g in self)
 
     @property
-    def avg_nodes_per_graph(self):
-        total_nodes = 0
-        for g in self:
-            total_nodes += g.num_nodes
-        avg_assets_per_graph = total_nodes / self.len()
-        return avg_assets_per_graph
+    def nodes_per_graph(self):
+        nodes = torch.tensor([g.num_nodes for g in self]).float()
+        return nodes.mean(), nodes.std()
 
     @property
-    def avg_edges_per_graph(self):
-        total_edges = 0
-        for g in self:
-            total_edges += g.num_edges
-        avg_edges_per_graph = total_edges / self.len()
-        return avg_edges_per_graph
+    def edges_per_graph(self):
+        edges = torch.tensor([g.num_edges for g in self]).float()
+        return edges.mean(), edges.std()
 
     @property
-    def avg_layers_per_graph(self):
+    def layers_per_graph(self):
         def num_layers(g):
             return g.x[:, 2].unique().size()[0]
-
-        total_layers = 0
-        for g in self:
-            total_layers += num_layers(g)
-        avg_edges_per_graph = total_layers / self.len()
-        return avg_edges_per_graph
+        layers = torch.tensor([num_layers(g) for g in self]).float()
+        return layers.mean(), layers.std()
 
     @property
     def num_node_features(self) -> int:
