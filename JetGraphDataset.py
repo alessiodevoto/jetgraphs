@@ -59,7 +59,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         
         
         # The directory tree is a bit messy, so we have to 'walk' to locate the right subdirectory.
-        gen = os.walk(raw_dir)
+        gen = os.walk(self.raw_dir)
         t = next(gen)
         while(len(t[-1]) < 2 or not t[-1][0].endswith('gml')):
             t = next(gen)
