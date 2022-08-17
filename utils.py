@@ -34,7 +34,7 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
     TODO complete this comment
     :parameter g: graph to plot Data object
     :parameter node_distance :
-    :parameter diplay_energy_as : options are []
+    :parameter diplay_energy_as : how the energy should be displayed options are ['colors', 'size', 'colors_and_size']
     :parameter ax : matplotlib axis
     """
 

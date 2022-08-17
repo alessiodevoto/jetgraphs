@@ -110,7 +110,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     def stats(self):
         print(f'\n*** JetGraph Dataset version:{self.dataset_name} ***\n')
 
-        # Static features, should be the same for all datasets.
+        # Static features, should be the same for all JetGraph datasets.
         print(f'Number of classes: {self.num_classes}')
         print(f'Number of graphs: {len(self)}')
         print(f'Dataset is undirected: {self.is_undirected}')
@@ -128,13 +128,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         m,s = self.subgraps_stats
         print(f'Average number of subgraphs per graph:{m:.2f} with std {s:.2f}')
         
-        # 2. main subgraph
-        # 3. subgraph-specific features.
-
-
         # TODO Add plotting options.
-
-
 
 
 
@@ -201,5 +195,6 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     
     @property
     def subgraps_stats(self):
-        subgraphs = [connected_components(g) for g in self]
+        # average number and stanndard deviation of subgraphs per graph. 
+        subgraphs = torch.tensor([connected_components(g) for g in self])
         return subgraphs.mean(), subgraphs.std()
