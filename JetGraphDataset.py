@@ -196,5 +196,5 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     @property
     def subgraps_stats(self):
         # average number and stanndard deviation of subgraphs per graph. 
-        subgraphs = torch.tensor([connected_components(g) for g in self])
+        subgraphs = torch.tensor([connected_components(g) for g in self]).float()
         return subgraphs.mean(), subgraphs.std()
