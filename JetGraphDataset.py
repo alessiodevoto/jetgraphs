@@ -23,7 +23,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     def __init__(self, url, root, min_num_nodes=1, subset=False, transform=None, pre_transform=None, pre_filter=None):
         self.url = url
         self.subset = subset
-        self.min_num_nodes = min_num_nodes
+        self.min_num_nodes = min_num_nodes 
         super().__init__(root, transform, pre_transform, pre_filter)
 
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
@@ -137,22 +137,17 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         print(f'Number of edge features: {self.num_edge_features}')
 
         # Dynamic features, may change from version to version.
-        m, s = self.edges_per_graph
-        print(f'Average number of nodes per graph: {m:.2f} with std {s:.2f}')
-        m, s = self.nodes_per_graph
-        print(f'Average number of edges per graph: {m:.2f} with std {s:.2f}')
-        m, s = self.layers_per_graph
-        print(f'Average number of layers per graph: {m:.2f} with std {s:.2f}')
         print(f'Number of positive samples:{self.num_positive_samples:.2f}' )
-
-        # TODO Advanced stats requiring extra computation time.
-        # 1. number of subgraphs (i.e. connected components)
+        m, s = self.edges_per_graph
+        print(f'Nodes per graph -> mean: {m:.2f} ,  std: {s:.2f}')
+        m, s = self.nodes_per_graph
+        print(f'Edges per graph -> mean: {m:.2f},  std: {s:.2f}')
+        m, s = self.layers_per_graph
+        print(f'Layers per graph -> mean: {m:.2f}, std: {s:.2f}')
         m,s = self.subgraphs_stats
-        print(f'Average number of subgraphs per graph:{m:.2f} with std {s:.2f}')
+        print(f'Subgraphs per graph-> mean: {m:.2f},  std: {s:.2f}')
         
         # TODO Add plotting options.
-
-
 
     # PROPERTIES
     @property
