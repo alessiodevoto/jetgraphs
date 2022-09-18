@@ -110,7 +110,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
             
             
         print(
-            f'Filtered out {graphs_without_nodes} graphs without less than {self.min_num_nodes} nodes, of which {signal_graphs_without_nodes} were signal.')
+            f'Filtered out {graphs_without_nodes} graphs with less than {self.min_num_nodes} nodes, of which {signal_graphs_without_nodes} were signal.')
         print(
             f'Filtered out {graphs_without_edges} graphs without edges, of which {signal_graphs_without_edges} were signal.')
         print(f'Processing finished!')
