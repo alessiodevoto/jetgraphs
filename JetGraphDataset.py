@@ -28,9 +28,11 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
         if subset != self.subset:
+            print('A preprocessed version exits, but contains a different number of nodes. Processing graphs again.')
             self.process()
 
         self.dataset_name = dataset_name
+        print(f'Dataset name:{self.dataset_name}')
 
     def download(self):
         # Download to `self.raw_dir`.
@@ -67,6 +69,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         # Found correct subdir, move it to self.raw_dir/jetgraph_files
         old_subdir = t[0]
         self.dataset_name = old_subdir.split('/')[-1]
+        print(f'Dataset name:{self.dataset_name}')
         os.rename(old_subdir, osp.join(self.raw_dir,'jetgraph_files'))
 
         jetgraph_files = osp.join(self.raw_dir, 'jetgraph_files')
@@ -81,7 +84,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
             initial_num_graphs = len(filenames)
             num_graphs = int((float(self.subset[:-1]) / 100) * initial_num_graphs)
             print(f'Selecting {num_graphs} graphs from the initial {initial_num_graphs}.')
-            # First 50% is signal, second 50% is noise.
+            # First 50% is signal, second 50% is noise, so said Joe.
             ignore = initial_num_graphs - num_graphs
             filenames = filenames[ignore // 2: -ignore // 2]
             print(f'Selected {len(filenames)} graphs.')
@@ -101,10 +104,10 @@ class JetGraphDatasetInMemory(InMemoryDataset):
                 data = from_networkx(new_graph, group_node_attrs=all, group_edge_attrs=all)
                 data.y = int(new_graph.graph['y'])
                 data_list.append(data)
-            elif len(new_graph.edges) == 0:
+            if len(new_graph.edges) == 0:
                 graphs_without_edges += 1
                 signal_graphs_without_edges += int(new_graph.graph['y'])
-            elif len(new_graph.nodes) == 0:
+            if len(new_graph.nodes) < self.min_num_nodes:
                 graphs_without_nodes += 1
                 signal_graphs_without_nodes += int(new_graph.graph['y'])
             
