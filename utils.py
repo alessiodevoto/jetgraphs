@@ -1,4 +1,5 @@
 import re
+from JetGraphDataset import JetGraphDatasetInMemory
 import networkx as nx
 import numpy as np
 import scipy.sparse as sp
@@ -9,6 +10,7 @@ from torch_geometric.utils import to_scipy_sparse_matrix
 import matplotlib.pyplot as plt
 import torch
 from torch_geometric.data import Data
+import pandas as pd
 
 # from mpl_toolkits.mplot3d import Axes3D
 
@@ -127,3 +129,28 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
         ax.set_zlabel("l")
 
     _format_axes(ax)
+
+# Export a Jetgraph dataset to Pandas Dataframe.
+def stats_to_pandas(dataset, additional_col_names=[]):
+    """
+    Export a Jetgraph dataset to Pandas Dataframe. If no additional col_names are provided, 
+    then the pandas dataframe will have a row for each graph in dataset,
+    with ['y', 'num_nodes', 'num_edges'] columns. 
+    
+    Returns:
+    - a pandas dataframe 
+    - a dataset name (str)
+    """
+    data = []
+    col_names = ['y', 'num_nodes', 'num_edges']
+    col_names.extend(additional_col_names)
+
+    for elem in dataset:
+        g = [elem.y.item(), elem.num_nodes, elem.num_edges]
+        g.extend([elem.get(col) for col in additional_col_names])
+        data.append(g)
+
+    df = pd.DataFrame(data)
+    df.columns = col_names
+
+    return df, dataset.dataset_name

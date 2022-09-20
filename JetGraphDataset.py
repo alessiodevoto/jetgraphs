@@ -12,7 +12,7 @@ from torch_geometric.utils.convert import from_networkx
 from utils import connected_components
 
 def extract_dataset_name(ugly_name: str):
-    return re.findall('[0-9].[0-9]dR[0-9].[0-9]', ugly_name.split('/')[-1])
+    return re.findall('[0-9].[0-9]dR[0-9].[0-9]', ugly_name.split('/')[-1])[0]
 
 class JetGraphDatasetInMemory(InMemoryDataset):
     """
@@ -72,9 +72,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         
         # Found correct subdir, move it to self.raw_dir/jetgraph_files
         old_subdir = t[0]
-        print(f'[PROCESS]subdir name:{old_subdir}')
         self.dataset_name = extract_dataset_name(old_subdir) if not dataset_name else dataset_name
-        print(f'[PROCESS]Dataset name:{self.dataset_name}')
         os.rename(old_subdir, osp.join(self.raw_dir,'jetgraph_files'))
 
         jetgraph_files = osp.join(self.raw_dir, 'jetgraph_files')
