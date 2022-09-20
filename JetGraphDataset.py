@@ -160,13 +160,13 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     # PROPERTIES
     @property
     def is_undirected(self):
-        # for now it is undirected and we know it
+        # For now it is undirected and we know it.
         return True
         # return all(g.is_undirected() for g in self)
 
     @property
     def is_directed(self):
-        # for now it is undirected and we know it
+        # For now it is undirected and we know it.
         return False
         # return all(g.is_directed() for g in self)
 
