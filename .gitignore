@@ -2,3 +2,5 @@
 .idea/*
 .gitignore
 .outputs/*
+__pycache__/*
+test_dataset.ipynb
