@@ -3,6 +3,7 @@ import os.path as osp
 import random
 from tqdm import tqdm
 import warnings
+import re
 
 import torch
 import networkx as nx
@@ -10,6 +11,8 @@ from torch_geometric.data import InMemoryDataset, download_url, extract_zip
 from torch_geometric.utils.convert import from_networkx
 from utils import connected_components
 
+def extract_dataset_name(ugly_name: str):
+    return re.findall('[0-9].[0-9]dR[0-9].[0-9]', ugly_name.split('/')[-1])
 
 class JetGraphDatasetInMemory(InMemoryDataset):
     """
@@ -27,13 +30,13 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         super().__init__(root, transform, pre_transform, pre_filter)
 
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
-        print(f'[INIT 0 ]Dataset name:{dataset_name}')
+       
         if subset != self.subset:
             print('A preprocessed version exits, but contains a different number of nodes. Processing graphs again.')
             self.process(dataset_name=dataset_name)
 
         self.dataset_name = dataset_name
-        print(f'[INIT 1]Dataset name:{self.dataset_name}')
+        
 
     def download(self):
         # Download to `self.raw_dir`.
@@ -69,7 +72,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         
         # Found correct subdir, move it to self.raw_dir/jetgraph_files
         old_subdir = t[0]
-        self.dataset_name = old_subdir.split('/')[-1] if not dataset_name else dataset_name
+        print(f'[PROCESS]subdir name:{old_subdir}')
+        self.dataset_name = extract_dataset_name(old_subdir) if not dataset_name else dataset_name
         print(f'[PROCESS]Dataset name:{self.dataset_name}')
         os.rename(old_subdir, osp.join(self.raw_dir,'jetgraph_files'))
 
