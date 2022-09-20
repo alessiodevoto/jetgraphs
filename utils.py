@@ -58,6 +58,26 @@ class ConnectedComponents(BaseTransform):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.return_subgraphs})'
 
+class ConnectedComponentsRemoveLargest(BaseTransform):
+    """
+    Compute connected components of graph g as a Transform.
+    :parameter g : graph to use as Data object.
+    Returns a list of Data objects for each graph. Each data object is a connected 
+    component of the initial graph. The largest connected component 
+    is not included in the returned list.
+    """
+    def __init__(self, directed=False):
+        self.directed = directed
+        
+
+    def __call__(self, data: Data) -> list:
+        _, _subgraphs = connected_components(data, return_subgraphs=True, directed=self.directed)
+        subgraphs = sorted(_subgraphs, key=lambda g : g.x.shape[0])[:-1]
+        return subgraphs
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}'
+
 
 class NumLayers(BaseTransform):
     """
