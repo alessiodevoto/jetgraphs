@@ -27,12 +27,13 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         super().__init__(root, transform, pre_transform, pre_filter)
 
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
+        print(f'[INIT 0 ]Dataset name:{dataset_name}')
         if subset != self.subset:
             print('A preprocessed version exits, but contains a different number of nodes. Processing graphs again.')
-            self.process()
+            self.process(dataset_name=dataset_name)
 
         self.dataset_name = dataset_name
-        print(f'Dataset name:{self.dataset_name}')
+        print(f'[INIT 1]Dataset name:{self.dataset_name}')
 
     def download(self):
         # Download to `self.raw_dir`.
@@ -40,7 +41,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         download_url(url, self.raw_dir)
         extract_zip(osp.join(self.raw_dir, 'download'), self.raw_dir)
 
-    def process(self):
+    def process(self, dataset_name=None):
 
         # Just a bit messy with all dirs/subdirs names.
         """# TODO we should find a clean way to extract this, regardless of the confused organization.
@@ -68,8 +69,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
         
         # Found correct subdir, move it to self.raw_dir/jetgraph_files
         old_subdir = t[0]
-        self.dataset_name = old_subdir.split('/')[-1]
-        print(f'Dataset name:{self.dataset_name}')
+        self.dataset_name = old_subdir.split('/')[-1] if not dataset_name else dataset_name
+        print(f'[PROCESS]Dataset name:{self.dataset_name}')
         os.rename(old_subdir, osp.join(self.raw_dir,'jetgraph_files'))
 
         jetgraph_files = osp.join(self.raw_dir, 'jetgraph_files')
