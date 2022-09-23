@@ -1,5 +1,4 @@
 import re
-from JetGraphDataset import JetGraphDatasetInMemory
 import networkx as nx
 import numpy as np
 import scipy.sparse as sp
@@ -12,7 +11,7 @@ import torch
 from torch_geometric.data import Data
 import pandas as pd
 
-# from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D
 
 def connected_components(g, return_subgraphs=False, directed=False):
     """
@@ -90,7 +89,7 @@ class NumLayers(BaseTransform):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
 
-def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5)):
+def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5), elev=30, angle=0):
     """
     Display graph g, assuming 4 attributes per node and optimal distance between node and node size.
     TODO complete this comment
@@ -99,11 +98,11 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
     :parameter diplay_energy_as : how the energy should be displayed options are ['colors', 'size', 'colors_and_size']
     :parameter ax : matplotlib axis
     """
-
+    plt.style.use('ggplot')
     # The graph to visualize
     G = to_networkx(g, node_attrs=['x'])
 
-    # Remove last coordinate, i.e. energy,  and store it in other attribute field
+    # Remove last coordinate, i.e. energy, and store it in other attribute field
     for node_idx in G.nodes():
         G.nodes[node_idx]['energy'] = G.nodes[node_idx]['x'][-1]
         G.nodes[node_idx]['x'] = G.nodes[node_idx]['x'][0:3]
@@ -141,14 +140,68 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
         # Turn gridlines off
         ax.grid(False)
         # Suppress tick labels
-        for dim in (ax.xaxis, ax.yaxis, ax.zaxis):
+        for dim in (ax.xaxis, ax.yaxis):
             dim.set_ticks([])
+        ax.zaxis.set_ticks([1,2,3,4])
         # Set axes labels
         ax.set_xlabel("η")
         ax.set_ylabel("φ")
         ax.set_zlabel("l")
 
     _format_axes(ax)
+
+    # Set the initial view
+    ax.view_init(elev, angle)
+
+    plt.savefig(f'/Users/alessiodevoto/projects/graph/{angle}.png')
+    plt.close('all')
+    
+
+
+def network_plot(g, angle, save=False, elev=10, s=50):
+
+    n = g.x.shape[0]
+    print(n)
+
+    # 3D network plot
+    with plt.style.context(('ggplot')):
+        
+        fig = plt.figure(figsize=(10,7))
+        ax = Axes3D(fig)
+        
+        # Loop on the pos dictionary to extract the x,y,z coordinates of each node
+        for idx in range(n):
+            xi = g.x[idx, 0]
+            yi = g.x[idx, 1]
+            zi = g.x[idx, 2]
+            
+            # Scatter plot
+            ax.scatter(xi, yi, zi, s=s, edgecolors='k', alpha=0.7)
+        
+        # Loop on the list of edges to get the x,y,z, coordinates of the connected nodes
+        # Those two points are the extrema of the line to be plotted
+        for i in range(g.edge_index.shape[1]):
+        
+            src = g.edge_index[0, i]
+            dst = g.edge_index[1, i]
+
+            x = np.array((g.x[src, 0], g.x[dst, 0]))
+            y = np.array((g.x[src, 1], g.x[dst, 1]))
+            z = np.array((g.x[src, 2], g.x[dst, 2]))
+        
+            # Plot the connecting lines
+            ax.plot(x, y, z, c='black', alpha=0.5)
+    
+    # Set the initial view
+    ax.view_init(elev, angle)
+
+    #plt.savefig(f'/Users/alessiodevoto/projects/graph/{angle}.png')
+    #plt.close('all')
+
+    # Hide the axes
+    #ax.set_axis_off()
+    
+    
 
 # Export a Jetgraph dataset to Pandas Dataframe.
 def stats_to_pandas(dataset, additional_col_names=[]):
