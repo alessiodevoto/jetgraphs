@@ -6,10 +6,12 @@ import torch
 from torch_geometric.utils import to_networkx
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_scipy_sparse_matrix
+import matplotlib
 import matplotlib.pyplot as plt
 import torch
 from torch_geometric.data import Data
 import pandas as pd
+import matplotlib.cm as cm
 
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -155,17 +157,27 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
 
     #plt.savefig(f'/Users/alessiodevoto/projects/graph/{angle}.png')
     #plt.close('all')
+
+def layers_colormap(idx):
+    if int(idx) > 4:
+        raise AttributeError(f'Only 4 colors available for layer. {idx} is out of bound.')
+    colors = ['r', 'b', 'g', 'c']
+    return colors[int(idx)]
     
 
-def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, figsize=(5,5), save_to_path=False):
+def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, color_layers=True, energy_is_size=True, figsize=(5,5), save_to_path=False):
     """
     Display graph g, assuming 4 attributes (eta, phi, layer, energy) per node and optimal distance between node and node size.
     :parameter g: Data object containing graph to plot.
     :parameter elev stores the elevation angle in the z plane. 
     :parameter angle stores the azimuth angle in the x,y plane.
-    :parameter diplay_energy_as : how the energy should be displayed options are ['colors', 'size', 'colors_and_size']
+    :parameter color_layers whether to color nodes on different layers with different colors
+    :parameter energy_is_size: whether to make nodes with higher energy bigger
     :parameter ax : matplotlib axis
     """
+
+    if energy_is_size and g.x.shape[1] < 4:
+        raise AttributeError(f'Cannot plot energy as size of nodes if provided graph has only {g.x.shape[1]} attributes. Energy should be the fourth attribute.')
 
     num_nodes = g.x.shape[0]
 
@@ -179,15 +191,18 @@ def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, figsize=(5,5), sa
         else:
             fig = ax.get_figure()
         
-        # Loop on the adjacency matrix to extract the x,y,z coordinates of each node
+        # Loop on the adjacency matrix to extract the x,y,z coordinates of each node 
         for idx in range(num_nodes):
             xi = g.x[idx, 0]
             yi = g.x[idx, 1]
             zi = g.x[idx, 2]
-            
+            ci = g.x[idx, 2]            # layer is represented as color
+            ei = g.x[idx, 3] * 500     # energy is represented as size
             
             # Scatter plot
-            ax.scatter(xi, yi, zi, edgecolors='k', alpha=0.7)
+            size = ei.item() if energy_is_size else matplotlib.rcParams['lines.markersize'] ** 2
+            color = layers_colormap(ci.item()) if color_layers else 'b'
+            ax.scatter(xi, yi, zi, color=color, s=size, edgecolors='k', alpha=0.7)
         
         # Loop on the list of edges to get the x,y,z, coordinates of the connected nodes
         # Those two points are the extrema of the line to be plotted
