@@ -138,10 +138,10 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
 
     def _format_axes(ax):
         # Turn gridlines off
-        ax.grid(False)
+        #ax.grid(False)
         # Suppress tick labels
-        for dim in (ax.xaxis, ax.yaxis):
-            dim.set_ticks([])
+        #for dim in (ax.xaxis, ax.yaxis):
+            #dim.set_ticks([])
         ax.zaxis.set_ticks([1,2,3,4])
         # Set axes labels
         ax.set_xlabel("η")
@@ -153,30 +153,41 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
     # Set the initial view
     ax.view_init(elev, angle)
 
-    plt.savefig(f'/Users/alessiodevoto/projects/graph/{angle}.png')
-    plt.close('all')
+    #plt.savefig(f'/Users/alessiodevoto/projects/graph/{angle}.png')
+    #plt.close('all')
     
 
+def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, figsize=(5,5), save_to_path=False):
+    """
+    Display graph g, assuming 4 attributes (eta, phi, layer, energy) per node and optimal distance between node and node size.
+    :parameter g: Data object containing graph to plot.
+    :parameter elev stores the elevation angle in the z plane. 
+    :parameter angle stores the azimuth angle in the x,y plane.
+    :parameter diplay_energy_as : how the energy should be displayed options are ['colors', 'size', 'colors_and_size']
+    :parameter ax : matplotlib axis
+    """
 
-def network_plot(g, angle, save=False, elev=10, s=50):
-
-    n = g.x.shape[0]
-    print(n)
+    num_nodes = g.x.shape[0]
 
     # 3D network plot
     with plt.style.context(('ggplot')):
         
-        fig = plt.figure(figsize=(10,7))
-        ax = Axes3D(fig)
+        # Create the 3D figure
+        if not ax:
+            fig = plt.figure(figsize=figsize)
+            ax = ax = Axes3D(fig)
+        else:
+            fig = ax.get_figure()
         
-        # Loop on the pos dictionary to extract the x,y,z coordinates of each node
-        for idx in range(n):
+        # Loop on the adjacency matrix to extract the x,y,z coordinates of each node
+        for idx in range(num_nodes):
             xi = g.x[idx, 0]
             yi = g.x[idx, 1]
             zi = g.x[idx, 2]
             
+            
             # Scatter plot
-            ax.scatter(xi, yi, zi, s=s, edgecolors='k', alpha=0.7)
+            ax.scatter(xi, yi, zi, edgecolors='k', alpha=0.7)
         
         # Loop on the list of edges to get the x,y,z, coordinates of the connected nodes
         # Those two points are the extrema of the line to be plotted
@@ -195,11 +206,17 @@ def network_plot(g, angle, save=False, elev=10, s=50):
     # Set the initial view
     ax.view_init(elev, angle)
 
-    #plt.savefig(f'/Users/alessiodevoto/projects/graph/{angle}.png')
-    #plt.close('all')
+    # Set axis labels
+    ax.set_xlabel("η")
+    ax.set_ylabel("φ")
+    ax.set_zlabel("l")
 
-    # Hide the axes
-    #ax.set_axis_off()
+    # Save or display right away
+    if save_to_path is not False:
+        plt.savefig(save_to_path)
+        plt.close('all')
+    else:
+        plt.show()
     
     
 
