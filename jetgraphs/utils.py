@@ -3,6 +3,7 @@ import numpy as np
 from torch_geometric.utils import to_networkx
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -63,11 +64,12 @@ def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, fi
         # Suppress tick labels
         #for dim in (ax.xaxis, ax.yaxis):
             #dim.set_ticks([])
-        ax.zaxis.set_ticks([1,2,3,4])
+        # ax.zaxis.set_ticks([1,2,3,4])
         # Set axes labels
         ax.set_xlabel("η")
         ax.set_ylabel("φ")
         ax.set_zlabel("l")
+        
 
     _format_axes(ax)
 
@@ -146,6 +148,7 @@ def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, color_layers=True
     ax.set_xlabel("η")
     ax.set_ylabel("φ")
     ax.set_zlabel("l")
+    ax.zaxis.set_major_locator(MaxNLocator(integer=True))
 
     # Save or display right away
     if save_to_path is not False:
