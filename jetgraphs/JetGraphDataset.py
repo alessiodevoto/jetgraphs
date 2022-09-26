@@ -9,7 +9,7 @@ import torch
 import networkx as nx
 from torch_geometric.data import InMemoryDataset, download_url, extract_zip
 from torch_geometric.utils.convert import from_networkx
-from utils import connected_components
+from .utils import connected_components
 
 def extract_dataset_name(ugly_name: str):
     return re.findall('[0-9].[0-9]dR[0-9].[0-9]', ugly_name.split('/')[-1])[0]
