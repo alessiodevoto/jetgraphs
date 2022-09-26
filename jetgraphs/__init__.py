@@ -1,1 +1,1 @@
-from .utils import stats_to_pandas
+from JetGraphDataset import JetGraphDatasetInMemory
