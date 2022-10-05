@@ -1,7 +1,6 @@
 from setuptools import setup
 
 setup(
-    # Needed to silence warnings (and to be a worthwhile package)
     name='jetgraphs',
     url='https://github.com/alessiodevoto/jetgraphs.git',
     author='Alessio Devoto',
