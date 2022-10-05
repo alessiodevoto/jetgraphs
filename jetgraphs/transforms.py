@@ -53,7 +53,7 @@ class ConnectedComponents(BaseTransform):
 
 class ConnectedComponentsRemoveLargest(BaseTransform):
     """
-    Compute connected components of graph g as a Transform.
+    Compute connected components of graph g as a Transform, removing the largest one.
     :parameter g : graph to use as Data object.
     Returns a list of Data objects for each graph. Each data object is a connected 
     component of the initial graph. The largest connected component 
@@ -62,7 +62,6 @@ class ConnectedComponentsRemoveLargest(BaseTransform):
     def __init__(self, directed=False):
         self.directed = directed
         
-
     def __call__(self, data: Data) -> list:
         _, _subgraphs = connected_components(data, return_subgraphs=True, directed=self.directed)
         subgraphs = sorted(_subgraphs, key=lambda g : g.x.shape[0])[:-1]

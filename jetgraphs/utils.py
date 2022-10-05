@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
+from collections.abc import Iterable
 
 
 def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5), elev=30, angle=0):
@@ -160,9 +161,9 @@ def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, color_layers=True
     
 
 # Export a Jetgraph dataset to Pandas Dataframe.
-def stats_to_pandas(dataset, additional_col_names=[]):
+def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     """
-    Export a Jetgraph dataset to Pandas Dataframe. If no additional col_names are provided, 
+    Export an iterable of graphs to a Pandas Dataframe. If no additional col_names are provided, 
     then the pandas dataframe will have a row for each graph in dataset,
     with ['y', 'num_nodes', 'num_edges'] columns. 
     
