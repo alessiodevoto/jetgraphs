@@ -178,9 +178,13 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     col_names = ['y', 'num_nodes', 'num_edges']
     col_names.extend(additional_col_names)
 
+    # Horrible:
+    inferred_col_names = [x for x in g.__dict__['_store'].keys() if x.startswith('num') and x not in col_names]
+
     for elem in dataset:
         g = [elem.y.item(), elem.num_nodes, elem.num_edges]
         g.extend([elem.get(col) for col in additional_col_names])
+        g.extend([elem.get(col) for col in inferred_col_names])
         data.append(g)
 
     df = pd.DataFrame(data)
