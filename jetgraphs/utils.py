@@ -9,6 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy 
 from pandas import DataFrame
 from collections.abc import Iterable
+import seaborn as sns
 
 
 def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5), elev=30, angle=0):
