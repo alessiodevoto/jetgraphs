@@ -29,7 +29,7 @@ def connected_components(g, return_subgraphs=False, directed=False):
     return num_components
 
 
-class ConnectedComponents(BaseTransform):
+class NumberOfSubgraphs(BaseTransform):
     """
     Compute connected components of graph g as a Transform.
     :parameter g : graph to use as Data object.
@@ -39,7 +39,7 @@ class ConnectedComponents(BaseTransform):
         self.directed = directed
         self.return_subgraphs = return_subgraphs
 
-    def __call__(self, data: Data) -> Data:
+    def __call__(self, data: Data):
         ret_value = connected_components(data, self.return_subgraphs, self.directed)
         if self.return_subgraphs:
             data.num_subgraphs = ret_value[0]
