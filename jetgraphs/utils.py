@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
+import numpy 
+from pandas import DataFrame
 from collections.abc import Iterable
 
 
@@ -187,3 +189,77 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     df.rename(columns={'y': 'class'}, inplace=True)
 
     return df, dataset.dataset_name
+
+
+
+
+def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path=False):
+  """
+  Print statistical info about Pandas dataframe of graphs.
+  - df : a pandas dataframe where each row is a graph and each column a property of that graph
+  - title : name to give to plot
+  - include_cols : cols to be included in plots
+  - exclude_cols : cols to be excluded from plots
+  - separate_classes : whether to make different plots for class = 1 and class = 0
+  - save_to_path : path where to save image. If False, image will just be displayed.
+  """ 
+  # Select list of columns to plot.
+  df_cols = list(df.columns)
+  if include_cols and exclude_cols:
+    raise ValueError('Yuo can eitheer specify columns to include or to exclude, not both.')
+  if include_cols:
+    cols_to_plot = [col for col in df_cols if col in include_cols]
+  elif exclude_cols:
+    cols_to_plot = [col for col in df_cols if col not in exclude_cols]
+  else:
+    cols_to_plot = df_cols
+
+  # Prepare plots structure.
+  print(f"Creating plots for columns: {cols_to_plot}. (This dataset has columns: {df_cols})")
+  num_plots = len(cols_to_plot) 
+  if not separate_classes:
+    num_plots += 1      # +1 for correlation matrix
+  fig, axs = plt.subplots(num_plots, figsize= (6, num_plots*5)) 
+  fig.subplots_adjust(hspace =.5, wspace=.5)
+
+  # # Split dataset into noise and signal.
+  if separate_classes:
+    df_signal = df.loc[df['class'] == 1].reset_index(drop=True)
+    df_noise = df.loc[df['class'] == 0].reset_index(drop=True)
+    title = f'{title} (NOISE vs SIGNAL)'
+    fig.suptitle(title, fontsize=16)
+  else:
+    title = f'{title} (ALL)' 
+    fig.suptitle(title, fontsize=16)
+
+  # Just in case we are plotting only one column.
+  if not isinstance(axs, numpy.ndarray):
+    axs = [axs]
+
+  # Distributions of column fields.
+  for i,col in enumerate(cols_to_plot):
+    y = [df_signal[col],  df_noise[col]] if separate_classes else df[col] 
+    axs[i].set_xlabel(col)
+    axs[i].set_ylabel('# graphs')
+
+    label = ['signal', 'noise'] if separate_classes else None
+    
+    axs[i].hist(y,bins=np.arange(min(df[col]), max(df[col]) + 2, 1), density=True, label=label, align='left')
+    axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
+    if separate_classes:
+      axs[i].legend()
+
+  # Correlation matrix.
+  if not separate_classes:
+    df_corr = df.corr()
+    mask = np.triu(np.ones_like(df_corr, dtype=bool))
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+    co = sns.heatmap(df_corr, mask=mask, cmap=cmap, vmax=.3, center=0,
+              square=True, linewidths=.5, annot=True, cbar_kws={"shrink": .5}, ax=axs[i+1])
+  
+  # Save or display right away
+  if save_to_path is not False:
+      plt.savefig(save_to_path, dpi=300)
+      plt.close('all')
+  else:
+      plt.show()
