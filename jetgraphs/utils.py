@@ -180,6 +180,7 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
     # Horrible:
     inferred_col_names = [x for x in dataset[0].__dict__['_store'].keys() if x.startswith('num') and x not in col_names]
+    col_names.extend(inferred_col_names)
 
     for elem in dataset:
         g = [elem.y.item(), elem.num_nodes, elem.num_edges]
