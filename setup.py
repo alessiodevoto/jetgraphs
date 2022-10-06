@@ -12,6 +12,7 @@ setup(
         'pytorch_lightning',
         'scikit-learn',
         'scipy',
+        'seaborn',
         'torchmetrics',
         'tqdm'], # TODO add here torch geometric!
     version='0.1',
