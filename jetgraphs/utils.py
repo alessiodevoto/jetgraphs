@@ -245,7 +245,7 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
 
     label = ['signal', 'noise'] if separate_classes else None
     
-    axs[i].hist(y,bins=np.arange(min(df[col]), max(df[col]) + 2, 1), density=True, label=label, align='left')
+    axs[i].hist(y,bins=np.arange(min(df[col]), max(df[col]) + 2, 1), label=label, align='left')
     axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
     if separate_classes:
       axs[i].legend()
