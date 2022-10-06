@@ -255,7 +255,7 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
     df_corr = df.corr()
     mask = np.triu(np.ones_like(df_corr, dtype=bool))
     cmap = sns.diverging_palette(230, 20, as_cmap=True)
-    co = sns.heatmap(df_corr, mask=mask, cmap=cmap, vmax=.3, center=0,
+    sns.heatmap(df_corr, mask=mask, cmap=cmap, vmax=.3, center=0,
               square=True, linewidths=.5, annot=True, cbar_kws={"shrink": .5}, ax=axs[i+1])
   
   # Save or display right away
