@@ -194,7 +194,7 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     # Rename "y" to "class".
     df.rename(columns={'y': 'class'}, inplace=True)
 
-    return df, dataset.dataset_name
+    return df
 
 
 
