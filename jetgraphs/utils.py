@@ -253,9 +253,9 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
     try:
         bins = np.arange(min(df[col]), max(df[col]) + 2, 1)
     except:
-        bins = df['layers_num'].unique().shape[0]
+        bins = 'auto'
 
-    axs[i].hist(y,bins=bins, label=label, align='left')
+    axs[i].hist(y, bins=bins, label=label, align='left')
     axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
     if separate_classes:
       axs[i].legend()
