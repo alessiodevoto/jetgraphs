@@ -81,3 +81,14 @@ class NumLayers(BaseTransform):
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
+
+class LayersNum(BaseTransform):
+    """
+    Compute layers' numbers in a jet graph.
+    """
+    def __call__(self, data: Data) -> Data:
+        data.layers_num = data.x[:, 2].int().unique().tolist()
+        return data
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}'
