@@ -10,6 +10,7 @@ import numpy
 from pandas import DataFrame
 from collections.abc import Iterable
 import seaborn as sns
+import os
 
 
 def plot_jet_graph(g, node_distance=0.3, display_energy_as='colors', ax=None, figsize=(5, 5), elev=30, angle=0):
@@ -199,7 +200,7 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
 
 
-def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path=False):
+def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path=False, format='pdf'):
   """
   Print statistical info about Pandas dataframe of graphs.
   - df : a pandas dataframe where each row is a graph and each column a property of that graph
@@ -265,7 +266,7 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
   
   # Save or display right away
   if save_to_path is not False:
-      plt.savefig(save_to_path, dpi=300)
+      plt.savefig(os.path.join(save_to_path, title+'.'+format), dpi=300)
       plt.close('all')
   else:
       plt.show()
