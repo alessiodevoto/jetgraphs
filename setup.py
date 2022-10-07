@@ -19,5 +19,5 @@ setup(
     # The license can be anything you like
     # license='MIT',
     description='A package to manipulate and plot jetgraphs',
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
 )
