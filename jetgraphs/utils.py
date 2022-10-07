@@ -251,12 +251,17 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
 
     label = ['signal', 'noise'] if separate_classes else None
     try:
+        # Numerical data.
         bins = np.arange(min(df[col]), max(df[col]) + 2, 1)
-    except:
-        bins = df[col].unique().shape[0] + 1
+        axs[i].hist(y, bins=bins, label=label, align='left')
+        axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
+    except Exception as e:
+        # Categorical data.
+        if separate_classes:
+          df.groupby('class').layers_num.value_counts().unstack(0).plot.bar(ax=axs[i])
+        else:
+          df.layers_num.value_counts().plot.bar(ax=axs[i])
 
-    axs[i].hist(y, bins=bins, label=label, align='left')
-    axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
     if separate_classes:
       axs[i].legend()
 
