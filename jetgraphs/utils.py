@@ -250,8 +250,12 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
     axs[i].set_ylabel('# graphs')
 
     label = ['signal', 'noise'] if separate_classes else None
-    
-    axs[i].hist(y,bins=np.arange(min(df[col]), max(df[col]) + 2, 1), label=label, align='left')
+    try:
+        bins = np.arange(min(df[col]), max(df[col]) + 2, 1)
+    except:
+        bins = df['layers_num'].unique().shape[0]
+
+    axs[i].hist(y,bins=bins, label=label, align='left')
     axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
     if separate_classes:
       axs[i].legend()
