@@ -258,7 +258,7 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
     except Exception as e:
         # Categorical data.
         if separate_classes:
-          df.groupby('class').layers_num.value_counts().unstack(0).plot.bar(ax=axs[i])
+          df.groupby('class').layers_num.value_counts().unstack(0).plot.bar(ax=axs[i], color={0:'tab:orange', 1:'tab:blue'})
         else:
           df.layers_num.value_counts().plot.bar(ax=axs[i])
 
