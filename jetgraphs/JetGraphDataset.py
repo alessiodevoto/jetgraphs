@@ -7,7 +7,7 @@ import re
 
 import torch
 import networkx as nx
-from torch_geometric.data import InMemoryDataset, download_url, extract_zip
+from torch_geometric.data import InMemoryDataset, download_url, extract_zip, Data
 from torch_geometric.utils.convert import from_networkx
 from .transforms import connected_components
 
@@ -263,7 +263,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             self.process(dataset_name=dataset_name)
 
         self.dataset_name = dataset_name
-        self.stats()
+        
         
 
     def _rename_filenames(self):
