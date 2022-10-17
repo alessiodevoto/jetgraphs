@@ -393,7 +393,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             print(f"Done processing files from {subdir}")
 
         print("Done processing!")
-        print(f"{excluded_graphs} (of which {signal_excluded_graphs} were signal) were excluded because they have less than {self.min_num_nodes} nodes.")
+        print(f"{excluded_graphs} graphs (of which {signal_excluded_graphs} were signal) were excluded because they have less than {self.min_num_nodes} nodes.")
         
         # Save obtained torch tensor for later.
         data, slices = self.collate(data_list)
@@ -413,7 +413,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
     # PROPERTIES
     @property
     def is_directed(self):
-        return self[0].is_directed()
+        return self.get(0).is_directed()
 
     @property
     def num_node_features(self) -> int:
