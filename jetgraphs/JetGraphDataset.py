@@ -425,7 +425,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
 
         # Apply transforms and filter.
         if self.pre_filter is not None:
-            print("[Processing] Filtering out unwanted graphs...")
+            print("[Processing] Filtering out unwanted graphs...")  
             processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
 
         if self.pre_transform is not None:

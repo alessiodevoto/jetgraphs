@@ -13,6 +13,7 @@ setup(
         'scikit-learn',
         'scipy',
         'seaborn',
+        'deepdish',
         'torchmetrics',
         'tqdm'], # TODO add here torch geometric!
     version='0.1',

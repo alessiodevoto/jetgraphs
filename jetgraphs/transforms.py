@@ -50,7 +50,7 @@ class BuildEdges(BaseTransform):
         self.consecutive_layer_threshold = consecutive_layer_threshold
         self.self_loops = True # so far we only support building graphs with self loops
         self.distance_p = distance_p
-        self.self_loop_wight = self_loop_weight
+        self.self_loop_weight = self_loop_weight
 
     def __call__(self, data: Data) -> Data:
         nodes = data.x
