@@ -88,7 +88,7 @@ class BuildEdges(BaseTransform):
 
         valid_edges = torch.stack(valid_edges)
         valid_edges = valid_edges.permute(1,0)
-        edge_attributes = torch.tensor(edge_attributes)
+        edge_attributes = torch.tensor(edge_attributes).unsqueeze(1)
 
         # If requested, make graph undirected.
         if not self.directed:
