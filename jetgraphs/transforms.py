@@ -83,6 +83,9 @@ class BuildEdges(BaseTransform):
                 valid_edges.append(edge)
                 edge_attributes.append(edge_len)
         
+        if len(valid_edges) == 0:
+            return data
+
         valid_edges = torch.stack(valid_edges)
         valid_edges = valid_edges.permute(1,0)
         edge_attributes = torch.tensor(edge_attributes)
