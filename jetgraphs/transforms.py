@@ -1,4 +1,3 @@
-from dis import dis
 import numpy as np
 import scipy.sparse as sp
 import torch
@@ -32,6 +31,7 @@ def connected_components(g, return_subgraphs=False, directed=False):
 class BuildEdges(BaseTransform):
     """
     Add edges to a graph without any edges, by connecting nodes according to following parameters.
+    All nodes will have self loops.
     :parameter directed:  whether the graph should be directed or not.
     :parameter same_layer_threshold: nodes in same layer with distance <= same_layer_threshold will be connected
     :parameter consecutive_layer_threshold: nodes in same layer with distance <= consecutive_layer_threshold will be connected
@@ -42,14 +42,15 @@ class BuildEdges(BaseTransform):
                 directed=True, 
                 same_layer_threshold = 0.6, 
                 consecutive_layer_threshold = 0.6,
-                self_loops = False,
-                distance_p = 2
+                distance_p = 2,
+                self_loop_weight = 1
                 ):
         self.directed = directed
         self.same_layer_threshold = same_layer_threshold 
         self.consecutive_layer_threshold = consecutive_layer_threshold
-        self.self_loops = self_loops
+        self.self_loops = True # so far we only support building graphs with self loops
         self.distance_p = distance_p
+        self.self_loop_wight = self_loop_weight
 
     def __call__(self, data: Data) -> Data:
         nodes = data.x
@@ -76,7 +77,10 @@ class BuildEdges(BaseTransform):
 
             # Consider distance between src and dst and add if below threshold.
             edge_len = distances[src][dst]
-            if edge_len <= self.same_layer_threshold and same_layer:
+            if src == dst:
+                valid_edges.append(edge)
+                edge_attributes.append(self.self_loop_weight)
+            elif edge_len <= self.same_layer_threshold and same_layer:
                 valid_edges.append(edge)
                 edge_attributes.append(edge_len)
             elif edge_len <= self.consecutive_layer_threshold and consecutive_layer:
