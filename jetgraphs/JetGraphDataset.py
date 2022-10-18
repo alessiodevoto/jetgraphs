@@ -415,7 +415,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             print(f'[Processing] Selecting {requested_graphs} graphs from the initial {TOTAL_GRAPHS}.')
             noise_graphs = int(percentage(25, requested_graphs))
             signal_graphs = int(percentage(50, requested_graphs))
-            print(f'[Processing]Graphs will be {noise_graphs} from Background 0, {noise_graphs} from Background 1, and {signal_graphs} from Signal subdir.')
+            print(f'[Processing] Graphs will be {noise_graphs} from Background 0, {noise_graphs} from Background 1, and {signal_graphs} from Signal subdir.')
         
         # Build (possibly reduced) list of graphs.
         signal_subset = data_list[0:signal_graphs]
