@@ -215,7 +215,19 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 """
 VERSION 2.
 """
+import os
+import os.path as osp
+from tqdm import tqdm
+import tarfile
+import re
+
+import torch
+import networkx as nx
+from torch_geometric.data import InMemoryDataset, download_url, extract_zip, Data
+from torch_geometric.utils.convert import from_networkx
+
 import deepdish as dd
+import glob
 
 TOTAL_GRAPHS = 100000 
 GRAPHS_IN_SIGNAL_SUBDIR = 50000
@@ -256,15 +268,38 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
-       
+
+        print(f"Loaded dataset with name {dataset_name}, containing subset of {subset}%")
         if subset != self.subset:
-            print('A preprocessed version exits, but contains a different number of nodes or different settings. Processing graphs again.')
+            print('This dataset contains a different number of nodes or has different settings. Processing graphs again.')
             self.process(dataset_name=dataset_name)
+            self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
+
 
         self.dataset_name = dataset_name
         
-        
 
+    def download(self):
+        """
+        Download tar file to raw_dir, extract directories to raw_dir and rename files. 
+        Finally cleanup all unused files.
+        """
+        # Download self.url to self.raw_dir.
+        download_url(self.url, self.raw_dir)
+        os.rename(osp.join(self.raw_dir, 'download'), osp.join(self.raw_dir, 'download.tar'))
+
+        # Extract everything in self.raw_dir
+        tar = tarfile.open(osp.join(self.raw_dir, 'download.tar'))
+        tar.extractall(self.raw_dir)
+        tar.close()
+
+        # Clean
+        os.remove(osp.join(self.raw_dir, 'download.tar'))
+
+        # Rename files.
+        self._rename_filenames()
+
+    
     def _rename_filenames(self):
         """
         Filenames are poorly named and so we have to rename them for easier processing.
@@ -289,58 +324,22 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             for filename in result:
                 os.rename(filename, filename.replace(f'{c}6', ''))
         print("Done renaming files!")
+    
+    def _preprocess(self):
+        print("[Preprocessing] Preprocessing data to build dataset of graphs without edges.")
         
-
-    def download(self):
-        """
-        Download tar file to raw_dir, extract directories to raw_dir and rename files. 
-        Finally cleanup all unused files.
-        """
-        # Download self.url to self.raw_dir.
-        download_url(self.url, self.raw_dir)
-        os.rename(osp.join(self.raw_dir, 'download'), osp.join(self.raw_dir, 'download.tar'))
-
-        # Extract everything in self.raw_dir
-        tar = tarfile.open(osp.join(self.raw_dir, 'download.tar'))
-        tar.extractall(self.raw_dir)
-        tar.close()
-
-        # Clean
-        os.remove(osp.join(self.raw_dir, 'download.tar'))
-
-        # Rename file names
-        self._rename_filenames()
-
-
-    def process(self, dataset_name=None):
-        self.dataset_name = f"min_nodes_{self.min_num_nodes}_subset_{self.subset}" if not dataset_name else dataset_name
-        # There should be 3 subdirectories: Signal, Background 1 and Background 2.
-        
+        data_list = []
         # Attributes to retrieve for each graph.
         attributes = ["eta", "phi", "energy", "energyabs"] 
-        # List to store all graphs.
-        data_list = [] 
-        # Graphs that are left out because they have nodes < self.min_num_nodes
-        excluded_graphs = 0
-        signal_excluded_graphs = 0
+    
+        # There should be 3 subdirectories: Signal, Background 1 and Background 2.
         
-        # Work out how many nodes from each subdirectory.
-        noise_graphs, signal_graphs = GRAPHS_IN_NOISE_SUBDIR, GRAPHS_IN_SIGNAL_SUBDIR
-
-        if self.subset:
-            requested_graphs = int(percentage(self.subset[:-1], TOTAL_GRAPHS))
-            print(f'Selecting {requested_graphs} graphs from the initial {TOTAL_GRAPHS}.')
-            noise_graphs = int(percentage(25, requested_graphs))
-            signal_graphs = int(percentage(50, requested_graphs))
-            print(f'Graphs will be {noise_graphs} from Background subdirs, and {signal_graphs} from Signal subdir.')
-            
-
         # Process each subdirectory separately. 
         subdirs = os.listdir(self.raw_dir)
         for subdir in subdirs:
-            print(f"Processing files in {subdir}...")
+            print(f"[Preprocessing] Reading files in {subdir}...")
             is_noise = is_noise_subdir(subdir) 
-            num_graphs = noise_graphs if is_noise else signal_graphs
+            num_graphs = GRAPHS_IN_NOISE_SUBDIR if is_noise else GRAPHS_IN_SIGNAL_SUBDIR
 
             # Build dictionary of raw data from each subdirectory indpendently.
             dataset_by_layer = {}
@@ -349,11 +348,11 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 for attribute in attributes:
                     filepath = os.path.join(self.raw_dir, subdir, f"a{layer}_tupleGraph_bar{attribute}.h5")
                     if self.verbose:
-                        print(f"Reading: {filepath}")
+                        print(f"[Preprocessing] Reading: {filepath}")
                     dataset_by_layer[layer][attribute] = dd.io.load(filepath)
 
             # Process raw tuples contained in dictionary.
-            print("Building graphs...")
+            print("[Preprocessing] Building graphs...")
             for gid in tqdm(range(1, num_graphs)):
                 # We are going to put in _nodes a tensor for each layer, of size (num_nodes_in_layer, num_attributes + 1).
                 # The +1 stems from the column that points out the node layer.
@@ -382,21 +381,61 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 # Last column is absolute energy, not useful from now, so we delete it.
                 nodes = nodes[:,:-1]
                 graph = Data(x=nodes, edge_attr=None, edge_index=None, y=graph_class)
-                if graph.x.shape[0] >= self.min_num_nodes:
-                    data_list.append(graph)
-                else:
-                    excluded_graphs += 1
-                    signal_excluded_graphs += graph_class
-            
-            print(f"Done processing files from {subdir}")
+                data_list.append(graph)
+                
+            print(f"[Preprocessing] Done preprocessing files in {subdir}")
 
-        print("Done processing!")
-        print(f"{excluded_graphs} graphs (of which {signal_excluded_graphs} were signal) were excluded because they have less than {self.min_num_nodes} nodes.")
+        print("[Preprocessing] Done preprocessing all subdirectories!")
         
         # Save obtained torch tensor for later.
-        data, slices = self.collate(data_list)
-        torch.save((data, slices, self.dataset_name, self.subset), self.processed_paths[0])
+        torch.save(data_list, self.pre_processed_path)
     
+
+    def process(self, dataset_name=None):
+        # If raw data ws not preprocessed, do it now.
+        # This should be done only once after download.
+        if not os.path.exists(self.pre_processed_path):
+            self._preprocess()
+        
+        # Dataset name so that we can keep track of amount of nodes in each processed version.
+        if dataset_name:
+            self.dataset_name = dataset_name
+        else:
+            self.dataset_name = f"min_nodes_{self.min_num_nodes}" if not dataset_name else dataset_name
+            
+
+        # Load preprocessed graphs.
+        print("[Processing] Loading pre processed data...")
+        data_list = torch.load(self.pre_processed_path) 
+        
+        # Work out amount of graphs to process.
+        signal_graphs, noise_graphs = GRAPHS_IN_SIGNAL_SUBDIR, GRAPHS_IN_NOISE_SUBDIR
+        if self.subset:
+            requested_graphs = int(percentage(self.subset[:-1], TOTAL_GRAPHS))
+            print(f'[Processing] Selecting {requested_graphs} graphs from the initial {TOTAL_GRAPHS}.')
+            noise_graphs = int(percentage(25, requested_graphs))
+            signal_graphs = int(percentage(50, requested_graphs))
+            print(f'[Processing]Graphs will be {noise_graphs} from Background 0, {noise_graphs} from Background 1, and {signal_graphs} from Signal subdir.')
+        
+        # Build (possibly reduced) list of graphs.
+        signal_subset = data_list[0:signal_graphs]
+        noise_subset_0 = data_list[GRAPHS_IN_SIGNAL_SUBDIR:GRAPHS_IN_SIGNAL_SUBDIR+noise_graphs]
+        noise_subset_1 = data_list[-noise_graphs:]
+        processed_data_list = signal_subset + noise_subset_0 + noise_subset_1
+
+        # Apply transforms and filter.
+        if self.pre_filter is not None:
+            print("[Processing] Filtering out unwanted graphs...")
+            processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
+
+        if self.pre_transform is not None:
+            print("[Processing] Applying pre transform...")
+            processed_data_list = [self.pre_transform(data) for data in tqdm(processed_data_list)]
+
+        # Save obtained torch tensor.
+        data, slices = self.collate(processed_data_list)
+        torch.save((data, slices, self.dataset_name, self.subset), self.processed_paths[0])
+
     # AUXILIARY FUNCTIONS
     def stats(self):
         print(f'\n*** JetGraph Dataset version:{self.dataset_name} ***\n')
@@ -432,4 +471,8 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ['jet_graph_processed_.pt']
+        return ['jet_graph_processed.pt']
+    
+    @property
+    def pre_processed_path(self):
+        return os.path.join(self.raw_dir, 'preprocessed_no_edges.list')
