@@ -1,8 +1,7 @@
 import os
 import os.path as osp
-import random
 from tqdm import tqdm
-import warnings
+import tarfile
 import re
 
 import torch
@@ -325,7 +324,6 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         excluded_graphs = 0
         signal_excluded_graphs = 0
         
-        
         # Work out how many nodes from each subdirectory.
         noise_graphs, signal_graphs = GRAPHS_IN_NOISE_SUBDIR, GRAPHS_IN_SIGNAL_SUBDIR
 
@@ -382,7 +380,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 # Finally create and append graph to list.
                 graph_class = 0 if is_noise else 1
                 # Last column is absolute energy, not useful from now, so we delete it.
-                nodes = nodes[:,-1]
+                nodes = nodes[:,:-1]
                 graph = Data(x=nodes, edge_attr=None, edge_index=None, y=graph_class)
                 if graph.x.shape[0] >= self.min_num_nodes:
                     data_list.append(graph)
