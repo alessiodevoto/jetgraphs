@@ -269,7 +269,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
 
-        print(f"Loaded dataset with name {dataset_name}, containing subset of {subset}%")
+        print(f"Loaded dataset with name {dataset_name}, containing subset of {subset}")
         if subset != self.subset:
             print('This dataset contains a different number of nodes or has different settings. Processing graphs again.')
             self.process(dataset_name=dataset_name)
