@@ -375,6 +375,9 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 invalid_nodes_mask = (nodes[:, -1] <= 400) 
                 nodes = nodes[~invalid_nodes_mask]    
                 
+                # If no nodes are left after deleting unwanted.
+                if nodes.shape[0] == 0:
+                    continue
                 
                 # Finally create and append graph to list.
                 graph_class = 0 if is_noise else 1
