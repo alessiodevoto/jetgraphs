@@ -408,7 +408,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             
 
         # Load preprocessed graphs.
-        print("[Processing] Loading pre processed data...")
+        print("[Processing] Loading preprocessed data...")
         data_list = torch.load(self.pre_processed_path) 
         
         # Work out amount of graphs to process.
