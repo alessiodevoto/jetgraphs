@@ -13,7 +13,7 @@ import seaborn as sns
 import os
 
 
-def plot_jet_graph2(g, save=False, angle=30, elev=10, ax=None, color_layers=True, energy_is_size=True, figsize=(5,5), save_to_path=False, **kwargs):
+def plot_jet_graph2(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_size=True, figsize=(5,5), save_to_path=False, **kwargs):
     """
     Display graph g, assuming 4 attributes (eta, phi, layer, energy) per node and optimal distance between node and node size.
     :parameter g: Data object containing graph to plot.
@@ -122,6 +122,74 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     df.rename(columns={'y': 'class'}, inplace=True)
 
     return df
+  
+def plot_dataset_info2(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path=False, format='pdf'):
+  """
+  Print statistical info about Pandas dataframe of graphs.
+  - df : a pandas dataframe where each row is a graph and each column a property of that graph
+  - title : name to give to plot
+  - include_cols : cols to be included in plots
+  - exclude_cols : cols to be excluded from plots
+  - separate_classes : whether to make different plots for class = 1 and class = 0
+  - save_to_path : path where to save image. If False, image will just be displayed.
+  """
+  plt.style.use('ggplot') 
+  # Select list of columns to plot.
+  df_cols = list(df.columns)
+  if include_cols and exclude_cols:
+    raise ValueError('Yuo can eitheer specify columns to include or to exclude, not both.')
+  if include_cols:
+    cols_to_plot = [col for col in df_cols if col in include_cols]
+  elif exclude_cols:
+    cols_to_plot = [col for col in df_cols if col not in exclude_cols]
+  else:
+    cols_to_plot = df_cols
+
+  # Prepare plots structure.
+  print(f"Creating plots for columns: {cols_to_plot} from dataset with columns: {df_cols})")
+  num_plots = len(cols_to_plot) 
+  if not separate_classes:
+    num_plots += 1      # +1 for correlation matrix
+  fig, axs = plt.subplots(num_plots, figsize= (6, num_plots*5)) 
+  fig.subplots_adjust(hspace =.5, wspace=.5)
+  # Set title.
+  title = f'{title} (NOISE vs SIGNAL)' if separate_classes else f'{title} (ALL)' 
+  fig.suptitle(title, fontsize=16)
+  # Just in case we are plotting only one column.
+  if not isinstance(axs, numpy.ndarray):
+    axs = [axs]
+
+  # Distributions of column fields.
+  for i, col in enumerate(cols_to_plot): 
+    axs[i].set_xlabel(col)
+    axs[i].set_ylabel('# graphs')
+
+    if separate_classes:
+      df0 = df.groupby('class')[col].value_counts().unstack(0)
+      df0 = df0.rename(columns={0:'noise', 1:'signal'})
+      x_ticks = df0.index if len(df0.index) < 100 else np.arange(0, df0.index[-1], 40)
+      df0.plot.bar(ax=axs[i], xticks=x_ticks, color={'signal':'tab:orange', 'noise':'tab:blue'})
+      axs[i].legend()
+    else:
+      df0 = df.layers_num.value_counts()
+      x_ticks = df0.index if len(df0.index) < 100 else np.arange(0, df0.index[-1], 40)
+      df0.plot.bar(ax=axs[i], xticks=x_ticks)
+      
+
+  # Correlation matrix.
+  if not separate_classes:
+    df_corr = df.corr()
+    mask = np.triu(np.ones_like(df_corr, dtype=bool))
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+    sns.heatmap(df_corr, mask=mask, cmap=cmap, vmax=.3, center=0,
+              square=True, linewidths=.5, annot=True, cbar_kws={"shrink": .5}, ax=axs[i+1])
+  
+  # Save or display right away
+  if save_to_path is not False:
+      plt.savefig(os.path.join(save_to_path, title+'.'+format), dpi=300)
+      plt.close('all')
+  else:
+      plt.show()
 
 
 
