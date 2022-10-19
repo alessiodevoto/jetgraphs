@@ -167,12 +167,12 @@ def plot_dataset_info2(df: DataFrame, title: str, include_cols : Iterable = Fals
     if separate_classes:
       df0 = df.groupby('class')[col].value_counts().unstack(0)
       df0 = df0.rename(columns={0:'noise', 1:'signal'})
-      x_ticks = df0.index if len(df0.index) < 100 else np.arange(0, df0.index[-1], 40)
+      x_ticks = None if len(df0.index) < 100 else np.arange(0, df0.index[-1], 30)
       df0.plot.bar(ax=axs[i], xticks=x_ticks, color={'signal':'tab:orange', 'noise':'tab:blue'})
       axs[i].legend()
     else:
       df0 = df.layers_num.value_counts()
-      x_ticks = df0.index if len(df0.index) < 100 else np.arange(0, df0.index[-1], 40)
+      x_ticks = None if len(df0.index) < 100 else np.arange(0, df0.index[-1], 30)
       df0.plot.bar(ax=axs[i], xticks=x_ticks)
       
 
