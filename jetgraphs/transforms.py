@@ -60,7 +60,12 @@ class BuildEdges(BaseTransform):
         # Initialize array with all possible *directed* edges, going from
         # lower to higher layers of graph (0 -> 1 -> 2 -> 3).
         nodes_idx = torch.arange(nodes.shape[0])
-        edges = torch.combinations(nodes_idx, with_replacement=self.self_loops) 
+        edges = torch.combinations(nodes_idx, with_replacement=self.self_loops)
+        
+        # Remark: edges is a list of tuples, in which the first element of each tuple
+        # is smaller than the second. This way, when considering a pair of nodes,
+        # we always consider first the edge going from lower to higher indexed nodes.
+        # The above property ensures that edge direction is from lower to higher levels.
 
         # Loop over all directed edges and filter out not compliant with parameters.
         valid_edges = []
@@ -77,7 +82,9 @@ class BuildEdges(BaseTransform):
 
             # Consider distance between src and dst and add if below threshold.
             edge_len = distances[src][dst]
-            if src == dst:
+            
+            if src == dst: 
+                # self loop
                 valid_edges.append(edge)
                 edge_attributes.append(self.self_loop_weight)
             elif edge_len <= self.same_layer_threshold and same_layer:
@@ -87,9 +94,11 @@ class BuildEdges(BaseTransform):
                 valid_edges.append(edge)
                 edge_attributes.append(edge_len)
         
+        # In case we end up with no edges we just return the initial nodes.
         if len(valid_edges) == 0:
             return data
 
+        # Create tensors for storing edges and edge attributes.
         valid_edges = torch.stack(valid_edges)
         valid_edges = valid_edges.permute(1,0)
         edge_attributes = torch.tensor(edge_attributes).unsqueeze(1)
