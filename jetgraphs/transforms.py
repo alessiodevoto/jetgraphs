@@ -175,7 +175,8 @@ class LayersNum(BaseTransform):
     Compute layers' numbers in a jet graph.
     """
     def __call__(self, data: Data) -> Data:
-        data.layers_num = data.x[:, 2].int().unique()
+        layers_num = data.x[:, 2].int().unique()
+        data.layers_num = str(layers_num.tolist())
         return data
 
     def __repr__(self) -> str:
