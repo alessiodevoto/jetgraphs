@@ -137,7 +137,7 @@ def plot_dataset_info2(df: DataFrame, title: str, include_cols : Iterable = Fals
   # Select list of columns to plot.
   df_cols = list(df.columns)
   if include_cols and exclude_cols:
-    raise ValueError('Yuo can eitheer specify columns to include or to exclude, not both.')
+    raise ValueError('Yuo can either specify columns to include or to exclude, not both.')
   if include_cols:
     cols_to_plot = [col for col in df_cols if col in include_cols]
   elif exclude_cols:
