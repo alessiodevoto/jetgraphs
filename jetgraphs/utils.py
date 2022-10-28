@@ -171,7 +171,7 @@ def plot_dataset_info2(df: DataFrame, title: str, include_cols : Iterable = Fals
       df0.plot.bar(ax=axs[i], xticks=x_ticks, color={'signal':'tab:orange', 'noise':'tab:blue'})
       axs[i].legend()
     else:
-      df0 = df.layers_num.value_counts()
+      df0 = df[col].value_counts()
       x_ticks = None if len(df0.index) < 100 else np.arange(0, df0.index[-1], 30)
       df0.plot.bar(ax=axs[i], xticks=x_ticks, color='c')
       
