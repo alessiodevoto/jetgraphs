@@ -254,7 +254,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 self, 
                 url, 
                 root,
-                subset=False, 
+                subset='100%', 
                 min_num_nodes=1,
                 verbose = False, 
                 transform=None, 
@@ -375,7 +375,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 invalid_nodes_mask = (nodes[:, -1] <= 400) 
                 nodes = nodes[~invalid_nodes_mask]    
                 
-                # If no nodes are left after deleting unwanted.
+                # If no nodes are left after deleting unwanted, just skip this graph.
                 if nodes.shape[0] == 0:
                     continue
                 
@@ -395,7 +395,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
     
 
     def process(self, dataset_name=None):
-        # If raw data ws not preprocessed, do it now.
+        # If raw data was not preprocessed, do it now.
         # This should be done only once after download.
         if not os.path.exists(self.pre_processed_path):
             self._preprocess()
