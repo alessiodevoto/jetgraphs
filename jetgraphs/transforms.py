@@ -78,7 +78,7 @@ class BuildEdges(BaseTransform):
             # Check if nodes are in same or consecutive layer.
             layer_gap = nodes[src][2] - nodes[dst][2]
             same_layer = layer_gap == 0
-            consecutive_layer = layer_gap == 1
+            consecutive_layer = layer_gap == -1
 
             # Consider distance between src and dst and add if below threshold.
             edge_len = distances[src][dst]
