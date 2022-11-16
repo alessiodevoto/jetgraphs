@@ -6,6 +6,10 @@ from torch_geometric.utils import to_scipy_sparse_matrix, to_undirected
 import torch
 from torch_geometric.data import Data
 
+"""
+This file contains transforms for jetgraph Data objects. 
+"""
+
 
 def connected_components(g, return_subgraphs=False, directed=False):
     """
@@ -120,8 +124,11 @@ class BuildEdges(BaseTransform):
 class NumberOfSubgraphs(BaseTransform):
     """
     Compute connected components of graph g as a Transform.
-    :parameter g : graph to use as Data object.
     :parameter return_subgraphs : whether to return a list of Data subgraphs.
+    :return a Data object with the new field num_subgraphs, that equals the number of subgraphs 
+    in graph. 
+    If return subgraphs is True, the returned data object will also have another field "subgrpahs"
+    containing a list of the subgraphs.
     """
     def __init__(self, return_subgraphs=False, directed=False):
         self.directed = directed
@@ -162,6 +169,8 @@ class ConnectedComponentsRemoveLargest(BaseTransform):
 class NumLayers(BaseTransform):
     """
     Compute number of layers in a jet graph.
+    :return a Data object with the field "num_layers" containing how 
+    many unique layers exist in the original graph. 
     """
     def __call__(self, data: Data) -> Data:
         data.num_layers = data.x[:, 2].unique().size()[0]
@@ -173,6 +182,8 @@ class NumLayers(BaseTransform):
 class LayersNum(BaseTransform):
     """
     Compute layers' numbers in a jet graph.
+    :return a Data object with the field "num_layers" containing the list of 
+    unique layers existing in the original graph. 
     """
     def __call__(self, data: Data) -> Data:
         layers_num = data.x[:, 2].int().unique()

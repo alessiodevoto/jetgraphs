@@ -10,6 +10,13 @@ from torch_geometric.data import InMemoryDataset, download_url, extract_zip, Dat
 from torch_geometric.utils.convert import from_networkx
 from .transforms import connected_components
 
+
+"""
+VERSION 1.
+This version build a datasets from a directory containing gml files. This is deprecated in favor
+of version 2.
+"""
+
 def extract_dataset_name(ugly_name: str):
     return re.findall('[0-9].[0-9]dR[0-9].[0-9]', ugly_name.split('/')[-1])[0]
 
@@ -214,6 +221,8 @@ class JetGraphDatasetInMemory(InMemoryDataset):
 
 """
 VERSION 2.
+While version 1 was used to build a dataset from preprocessed gml files, version 2 builds graphs 
+from raw data directly, allowing for a deeper control on the graph building pipeline.
 """
 import os
 import os.path as osp
@@ -288,12 +297,12 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         download_url(self.url, self.raw_dir)
         os.rename(osp.join(self.raw_dir, 'download'), osp.join(self.raw_dir, 'download.tar'))
 
-        # Extract everything in self.raw_dir
+        # Extract everything in self.raw_dir.
         tar = tarfile.open(osp.join(self.raw_dir, 'download.tar'))
         tar.extractall(self.raw_dir)
         tar.close()
 
-        # Clean
+        # Clean.
         os.remove(osp.join(self.raw_dir, 'download.tar'))
 
         # Rename files.
