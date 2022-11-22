@@ -193,3 +193,12 @@ class LayersNum(BaseTransform):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
 
+from torch.nn.functional import one_hot as one_hot_encode
+class OneHotEncodeLayer(BaseTransform):
+  """
+  One hot encode the third attribute of each node, which is a integer from 0 to 3.
+  """
+  def __call__(self, data):
+    one_hot_encoding = one_hot_encode(data.x[:,2].to(torch.int64), num_classes=4)
+    data.x = torch.cat([data.x[:,:2], one_hot_encoding, data.x[:,-1].unsqueeze(1)], dim=-1)
+    return data
