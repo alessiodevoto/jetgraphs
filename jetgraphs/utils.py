@@ -18,7 +18,7 @@ Please use functions with signature ending in "v2" as much as possible.
 """
 
 
-def plot_jet_graph2(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_size=True, figsize=(5,5), save_to_path=False, **kwargs):
+def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_size=True, figsize=(5,5), save_to_path=False, **kwargs):
     """
     Display graph g, assuming 4 attributes (eta, phi, layer, energy) per node and optimal distance between node and node size.
     :parameter g: Data object containing graph to plot.
@@ -128,87 +128,6 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
 
 def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path=False, format='pdf'):
-  """
-  Print statistical info about Pandas dataframe of graphs.
-  - df : a pandas dataframe where each row is a graph and each column a property of that graph
-  - title : name to give to plot
-  - include_cols : cols to be included in plots
-  - exclude_cols : cols to be excluded from plots
-  - separate_classes : whether to make different plots for class = 1 and class = 0
-  - save_to_path : path where to save image. If False, image will just be displayed.
-  """ 
-  # Select list of columns to plot.
-  df_cols = list(df.columns)
-  if include_cols and exclude_cols:
-    raise ValueError('Yuo can eitheer specify columns to include or to exclude, not both.')
-  if include_cols:
-    cols_to_plot = [col for col in df_cols if col in include_cols]
-  elif exclude_cols:
-    cols_to_plot = [col for col in df_cols if col not in exclude_cols]
-  else:
-    cols_to_plot = df_cols
-
-  # Prepare plots structure.
-  print(f"Creating plots for columns: {cols_to_plot}. (This dataset has columns: {df_cols})")
-  num_plots = len(cols_to_plot) 
-  if not separate_classes:
-    num_plots += 1      # +1 for correlation matrix
-  fig, axs = plt.subplots(num_plots, figsize= (6, num_plots*5)) 
-  fig.subplots_adjust(hspace =.5, wspace=.5)
-
-  # # Split dataset into noise and signal.
-  if separate_classes:
-    df_signal = df.loc[df['class'] == 1].reset_index(drop=True)
-    df_noise = df.loc[df['class'] == 0].reset_index(drop=True)
-    title = f'{title} (NOISE vs SIGNAL)'
-    fig.suptitle(title, fontsize=16)
-  else:
-    title = f'{title} (ALL)' 
-    fig.suptitle(title, fontsize=16)
-
-  # Just in case we are plotting only one column.
-  if not isinstance(axs, numpy.ndarray):
-    axs = [axs]
-
-  # Distributions of column fields.
-  for i, col in enumerate(cols_to_plot):
-    y = [df_signal[col],  df_noise[col]] if separate_classes else df[col] 
-    axs[i].set_xlabel(col)
-    axs[i].set_ylabel('# graphs')
-
-    label = ['signal', 'noise'] if separate_classes else None
-    try:
-        # Numerical data.
-        bins = np.arange(min(df[col]), max(df[col]) + 2, 1)
-        axs[i].hist(y, bins=bins, label=label, align='left')
-        axs[i].xaxis.set_major_locator(MaxNLocator(integer=True))
-    except Exception as e:
-        # Categorical data.
-        if separate_classes:
-          df.groupby('class').layers_num.value_counts().unstack(0).plot.bar(ax=axs[i], color={0:'tab:orange', 1:'tab:blue'})
-        else:
-          df.layers_num.value_counts().plot.bar(ax=axs[i])
-
-    if separate_classes:
-      axs[i].legend()
-
-  # Correlation matrix.
-  if not separate_classes:
-    df_corr = df.corr()
-    mask = np.triu(np.ones_like(df_corr, dtype=bool))
-    cmap = sns.diverging_palette(230, 20, as_cmap=True)
-    sns.heatmap(df_corr, mask=mask, cmap=cmap, vmax=.3, center=0,
-              square=True, linewidths=.5, annot=True, cbar_kws={"shrink": .5}, ax=axs[i+1])
-  
-  # Save or display right away
-  if save_to_path is not False:
-      plt.savefig(os.path.join(save_to_path, title+'.'+format), dpi=300)
-      plt.close('all')
-  else:
-      plt.show()
-
-
-def plot_dataset_info2(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path=False, format='pdf'):
   """
   Print statistical info about Pandas dataframe of graphs.
   - df : a pandas dataframe where each row is a graph and each column a property of that graph
