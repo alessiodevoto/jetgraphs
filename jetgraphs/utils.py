@@ -46,7 +46,7 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
         # Create the 3D figure
         if not ax:
             fig = plt.figure(figsize=figsize)
-            ax = ax = Axes3D(fig)
+            ax = Axes3D(fig)
         else:
             fig = ax.get_figure()
         
@@ -90,8 +90,7 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     if save_to_path is not False:
         plt.savefig(save_to_path)
         plt.close('all')
-    else:
-        plt.show()
+    
     
     
 def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
