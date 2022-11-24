@@ -1,27 +1,26 @@
+import os
 from typing import Any, Optional, Tuple
-
-from captum.influence._utils.common import _load_flexible_state_dict
+import os.path as osp
+import datetime
 from captum.influence import TracInCP, TracInCPFast
+from torch_geometric.loader import DataLoader
 
 import torch
-from captum._utils.common import _get_module_from_name
-from captum.influence._core.tracincp import TracInCPBase, KMostInfluentialResults
+from torch import Tensor
+from torch.nn import Module
+import matplotlib.pyplot as plt
+from .utils import plot_jet_graph
+
 from captum.influence._utils.common import (
     _jacobian_loss_wrt_inputs,
-    _load_flexible_state_dict,
     _tensor_batch_dot,
     _gradient_dot_product,
 )
 
-from math import ceil
-
-from torch import Tensor
-from torch.nn import Module
-
-import matplotlib.pyplot as plt
-
-from .utils import plot_jet_graph
-
+from captum._utils.gradient import (
+    _compute_jacobian_wrt_params,
+    _compute_jacobian_wrt_params_with_sample_wise_trick,
+)
 
 
 def _capture_inputs(layer: Module, input: Tensor, output: Tensor) -> None:
@@ -137,13 +136,6 @@ class TracInCPFastGNN(TracInCPFast):
         batch_self_tracin_scores += get_checkpoint_contribution(checkpoint)
 
     return batch_self_tracin_scores
-
-
-from captum._utils.gradient import (
-    _compute_jacobian_wrt_params,
-    _compute_jacobian_wrt_params_with_sample_wise_trick,
-)
-
 
 class TracInCPGNN(TracInCP):
 
@@ -270,7 +262,9 @@ class TracInCPGNN(TracInCP):
     return batch_self_tracin_scores
 
 def checkpoints_load_func(model, path):
-    # _load_flexible_state_dict(net, path, keyname='state_dict')
+    """
+    Load a chekpoint into model.
+    """
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint['state_dict'])
     # add other except clauses to load from different kinds of checkpoint
@@ -289,61 +283,152 @@ def display_proponents_and_opponents(
     test_examples_predicted_probs, 
     proponents_indices, 
     opponents_indices,
+    save_to_dir = False,
     **kwargs):
-  
-  for (
-      test_example,
-      test_example_true_label,
-      test_example_predicted_label,
-      test_example_predicted_prob,
-      test_example_proponents,
-      test_example_opponents,
-  ) in zip(
-      test_examples_batch,
-      test_examples_true_labels,
-      test_examples_predicted_labels,
-      test_examples_predicted_probs,
-      proponents_indices,
-      opponents_indices,
-  ):
+    """
+    Plot results from captum tracin.
+    """
+    sample_num = 0
+    for (
+        test_example,
+        test_example_true_label,
+        test_example_predicted_label,
+        test_example_predicted_prob,
+        test_example_proponents,
+        test_example_opponents,
+    ) in zip(
+        test_examples_batch,
+        test_examples_true_labels,
+        test_examples_predicted_labels,
+        test_examples_predicted_probs,
+        proponents_indices,
+        opponents_indices,
+    ):
 
-    num_examples = len(proponents_indices)
-    true_label = test_example_true_label.item()
-    predicted_label = int(test_example_predicted_label.item())
-    predicted_prob = test_example_predicted_prob.item()
-
-    
-    title = f"True label: {true_label}, predicted label: {predicted_label},  predicted prob: {predicted_prob:.2f}"
-    graph_size = 5
-    cols =  2
-    rows = num_examples + 1
-    figsize = (cols*graph_size, rows*graph_size,)
-
-    
-    fig = plt.figure(figsize=figsize)
-    
-    # Plot test example.
-    ax = fig.add_subplot(rows, 3, 2, projection="3d")
-    ax.set_title(title)
-    plot_jet_graph(g=test_example, ax=ax, **kwargs)
-    
-    idx = 3
-    test_example_graphs = [correct_dataset[i] for i in test_example_proponents]
-    for i in range(len(test_example_proponents)):
-        ax = fig.add_subplot(rows, cols, idx, projection="3d") 
-        ax.set_title(f'[Proponent] Label:{test_example_graphs[i].y.item()}')
-        ax.title.set_color('green') 
-        plot_jet_graph(g=test_example_graphs[i], ax = ax, **kwargs) 
-        idx += 2
-    
-    idx = 4
-    test_example_graphs = [correct_dataset[i] for i in test_example_opponents]
-    for i in range(len(test_example_opponents)):
-        ax = fig.add_subplot(rows, cols, idx, projection="3d")
-        ax.set_title(f'[Opponent] Label:{test_example_graphs[i].y.item()}') 
-        ax.title.set_color('red') 
-        plot_jet_graph(g=test_example_graphs[i], ax = ax, **kwargs)
-        idx += 2
-    
-    plt.subplots_adjust(hspace=.6, wspace=.2)
+        num_examples = len(proponents_indices) # num of prop and opp for each example
+        graph_size = 5
+        cols =  2
+        rows = num_examples + 1
+        figsize = (cols*graph_size, (rows+2)*graph_size)
+        fig = plt.figure(figsize=figsize)
+         
+        # Plot test example.
+        true_label = test_example_true_label.item()
+        predicted_label = int(test_example_predicted_label.item())
+        predicted_prob = test_example_predicted_prob.item()
+        title = f"True label: {true_label}, predicted label: {predicted_label},  predicted prob: {predicted_prob:.2f}"
+        ax = fig.add_subplot(rows, 3, 2, projection="3d")
+        ax.set_title(title)
+        plot_jet_graph(g=test_example, ax=ax, **kwargs)
+        
+        # Plot proponents on left column.
+        idx = 3
+        test_example_graphs = [correct_dataset[i] for i in test_example_proponents]
+        for i in range(len(test_example_proponents)):
+            ax = fig.add_subplot(rows, cols, idx, projection="3d") 
+            ax.set_title(f'[Proponent] Label:{test_example_graphs[i].y.item()}')
+            ax.title.set_color('green') 
+            plot_jet_graph(g=test_example_graphs[i], ax = ax, **kwargs) 
+            idx += 2
+        
+        # Plot opponents on right column.
+        idx = 4
+        test_example_graphs = [correct_dataset[i] for i in test_example_opponents]
+        for i in range(len(test_example_opponents)):
+            ax = fig.add_subplot(rows, cols, idx, projection="3d")
+            ax.set_title(f'[Opponent] Label:{test_example_graphs[i].y.item()}') 
+            ax.title.set_color('red') 
+            plot_jet_graph(g=test_example_graphs[i], ax = ax, **kwargs)
+            idx += 2
+        
+        plt.subplots_adjust( wspace=.1)
+        
+        if save_to_dir is not False:
+            plt.savefig(os.path.join(save_to_dir, f"sample_num_{sample_num}.pdf"))
+            sample_num += 1
+            plt.close('all')
     plt.show()
+
+
+class CaptumPipeline:
+
+    def __init__(self, model, dataset, train_idx, checkpoint_dir, epochs, captum_impl='fast'):
+        
+        self.model = model
+        self.checkpoint_dir = checkpoint_dir
+        self.epochs = epochs
+        self.dataset = dataset
+
+        # We first load the model with the last checkpoint so that the predictions we make in the next cell will be for the trained model.
+        correct_dataset_final_checkpoint = osp.join(self.checkpoint_dir, f'gnn-epoch={epochs-1}.ckpt')
+        checkpoints_load_func(model, correct_dataset_final_checkpoint)
+
+        # Dataloader for Captum.
+        self.influence_src_dataloader = DataLoader(dataset[train_idx], batch_size=64, shuffle=False)
+
+        # Prepare Captum
+        if captum_impl == 'fast':
+            self.tracin_impl = TracInCPFastGNN(
+                model=model,
+                final_fc_layer=list(model.children())[-1],
+                influence_src_dataset=self.influence_src_dataloader,
+                checkpoints=checkpoint_dir,
+                checkpoints_load_func=checkpoints_load_func,
+                loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,
+                batch_size=2048,
+                vectorize=False
+            )
+
+    def run_captum(self, test_influence_indices):
+
+        # Prepare samples.
+        test_influence_loader = DataLoader(self.dataset[test_influence_indices], batch_size=len(test_influence_indices), shuffle=False)
+        self.test_examples_batch = next(iter(test_influence_loader))
+        self.test_examples_predicted_probs = torch.sigmoid(self.model(self.test_examples_batch)) 
+        self.test_examples_predicted_labels = (self.test_examples_predicted_probs > 0.5).float()
+        self.test_examples_true_labels = self.test_examples_batch.y.unsqueeze(1)
+
+        
+        start_time = datetime.datetime.now()
+
+        # Compute proponents.
+        p_idx, p_scores = self.tracin_impl.influence(
+            inputs = self.test_examples_batch, 
+            targets = self.test_examples_true_labels, 
+            k=len(test_influence_indices), 
+            proponents=True, 
+            unpack_inputs=False
+        )
+
+        # Compute opponents.
+        o_idx, o_scores = self.tracin_impl.influence(
+            inputs = self.test_examples_batch, 
+            targets = self.test_examples_true_labels, 
+            k=len(test_influence_indices), 
+            proponents=False, 
+            unpack_inputs=False
+        )
+
+        total_minutes = (datetime.datetime.now() - start_time).total_seconds() / 60.0
+        print(
+            "Computed proponents / opponents over a dataset of %d examples in %.2f minutes"
+            % (len(self.influence_src_dataloader)*self.influence_src_dataloader.batch_size, total_minutes)
+        )
+
+        self.proponents_idx, self.proponents_scores = p_idx, p_scores
+        self.opponents_idx, self.opponents_scores = o_idx, o_scores
+    
+    def display_results(self, save_to_dir=False):
+        src_dataset = []
+        for x in self.influence_src_dataloader:
+            src_dataset.extend(x.to_data_list())
+
+        display_proponents_and_opponents(
+            self.test_examples_batch.to_data_list(), 
+            src_dataset, 
+            self.test_examples_true_labels, 
+            self.test_examples_predicted_labels, 
+            self.test_examples_predicted_probs, 
+            self.proponents_idx, 
+            self.opponents_idx,
+            save_to_dir)
