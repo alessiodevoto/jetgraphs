@@ -202,3 +202,12 @@ class OneHotEncodeLayer(BaseTransform):
     one_hot_encoding = one_hot_encode(data.x[:,2].to(torch.int64), num_classes=4)
     data.x = torch.cat([data.x[:,:2], one_hot_encoding, data.x[:,-1].unsqueeze(1)], dim=-1)
     return data
+
+class OneHotDecodeLayer(BaseTransform):
+  """
+  One hot encode the third attribute of each node, which is a integer from 0 to 3.
+  """
+  def __call__(self, data):
+    decoded_layer = torch.argmax(data.x[:, 2:6], dim=1)
+    data.x = torch.cat([data.x[:,:2], decoded_layer.view(-1, 1), data.x[:,-1].unsqueeze(1)], dim=-1)
+    return data

@@ -13,12 +13,14 @@ from captum.influence._utils.common import (
     _gradient_dot_product,
 )
 
+from math import ceil
+
 from torch import Tensor
 from torch.nn import Module
 
 import matplotlib.pyplot as plt
 
-from utils import plot_jet_graph
+from .utils import plot_jet_graph
 
 
 
@@ -279,24 +281,16 @@ def checkpoints_load_func(model, path):
         lr = 1.
     return lr
 
-# Display examples as molecules.
-def display_examples(correct_dataset, examples_indices):
-  test_example_graphs = [correct_dataset[i] for i in examples_indices]
+def display_proponents_and_opponents(
+    test_examples_batch, 
+    correct_dataset, 
+    test_examples_true_labels, 
+    test_examples_predicted_labels, 
+    test_examples_predicted_probs, 
+    proponents_indices, 
+    opponents_indices,
+    **kwargs):
   
-  # fig, axes = plt.subplots(nrows=1, ncols=len(examples_indices), figsize=(20,5))
-  # ax = axes.flatten()
-  fig = plt.figure(figsize=(20,5))
-  
-  for i in range(len(examples_indices)):
-    
-    ax = fig.add_subplot(1, len(examples_indices), i+1, projection="3d")
-    ax.set_title(f'Label:{test_example_graphs[i].y.item()}') 
-    plot_jet_graph(g=test_example_graphs[i], ax = ax)  
-  
-  plt.show()
-
-
-def display_proponents_and_opponents(test_examples_batch, correct_dataset, test_examples_true_labels, test_examples_predicted_labels, test_examples_predicted_probs, proponents_indices, opponents_indices,):
   for (
       test_example,
       test_example_true_label,
@@ -313,17 +307,43 @@ def display_proponents_and_opponents(test_examples_batch, correct_dataset, test_
       opponents_indices,
   ):
 
-    print('Test example:')
-    print(f'True label: {test_example_true_label.item()}')
-    print(f'Predicted label: {int(test_example_predicted_label.item())}')
-    print(f'Predicted prob: {test_example_predicted_prob.item()}')
-    
+    num_examples = len(proponents_indices)
+    true_label = test_example_true_label.item()
+    predicted_label = int(test_example_predicted_label.item())
+    predicted_prob = test_example_predicted_prob.item()
 
-    plot_jet_graph(g=test_example)
+    
+    title = f"True label: {true_label}, predicted label: {predicted_label},  predicted prob: {predicted_prob:.2f}"
+    graph_size = 5
+    cols =  2
+    rows = num_examples + 1
+    figsize = (cols*graph_size, rows*graph_size,)
+
+    
+    fig = plt.figure(figsize=figsize)
+    
+    # Plot test example.
+    ax = fig.add_subplot(rows, 3, 2, projection="3d")
+    ax.set_title(title)
+    plot_jet_graph(g=test_example, ax=ax, **kwargs)
+    
+    idx = 3
+    test_example_graphs = [correct_dataset[i] for i in test_example_proponents]
+    for i in range(len(test_example_proponents)):
+        ax = fig.add_subplot(rows, cols, idx, projection="3d") 
+        ax.set_title(f'[Proponent] Label:{test_example_graphs[i].y.item()}')
+        ax.title.set_color('green') 
+        plot_jet_graph(g=test_example_graphs[i], ax = ax, **kwargs) 
+        idx += 2
+    
+    idx = 4
+    test_example_graphs = [correct_dataset[i] for i in test_example_opponents]
+    for i in range(len(test_example_opponents)):
+        ax = fig.add_subplot(rows, cols, idx, projection="3d")
+        ax.set_title(f'[Opponent] Label:{test_example_graphs[i].y.item()}') 
+        ax.title.set_color('red') 
+        plot_jet_graph(g=test_example_graphs[i], ax = ax, **kwargs)
+        idx += 2
+    
+    plt.subplots_adjust(hspace=.6, wspace=.2)
     plt.show()
-
-    print("Proponents:")
-    display_examples(correct_dataset, test_example_proponents)
-    
-    print('Opponents:')
-    display_examples(correct_dataset, test_example_opponents)

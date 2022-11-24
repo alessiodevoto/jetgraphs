@@ -39,7 +39,7 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     
 
     if g.x.shape[1] == 7:
-      from transforms import OneHotDecodeLayer
+      from .transforms import OneHotDecodeLayer
       g = OneHotDecodeLayer()(g)
     
     assert g.x.shape[1] == 4, "The provided graph must have either 7 or 4 node features."
@@ -91,8 +91,11 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     ax.set_xlabel("η")
     ax.set_ylabel("φ")
     ax.set_zlabel("l")
-    # ax.zaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.zaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.xticks(rotation=-45)
+    plt.yticks(rotation=45)
 
+    fig.subplots_adjust(wspace=0)
     # Save or display right away
     if save_to_path is not False:
         plt.savefig(save_to_path)
