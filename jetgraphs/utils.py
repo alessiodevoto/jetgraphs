@@ -20,7 +20,9 @@ Please use functions with signature ending in "v2" as much as possible.
 
 def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_size=True, figsize=(5,5), save_to_path=False, **kwargs):
     """
-    Display graph g, assuming 4 attributes (eta, phi, layer, energy) per node and optimal distance between node and node size.
+    Display graph g, assuming 4 node features (eta, phi, layer, energy) per node and optimal distance between node and node size.
+    If g has 7 node features, then the function assumes the layer was one hot encoded and transforms node features from 2 to 6 
+    into labels. 
     :parameter g: Data object containing graph to plot.
     :parameter elev stores the elevation angle in the z plane. 
     :parameter angle stores the azimuth angle in the x,y plane.
@@ -34,9 +36,13 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
             raise AttributeError(f'Only 4 colors available for layer. {idx} is out of bound.')
         colors = ['r', 'b', 'g', 'c']
         return colors[int(idx)]
+    
 
-    if energy_is_size and g.x.shape[1] < 4:
-        raise AttributeError(f'Cannot plot energy as size of nodes if provided graph has only {g.x.shape[1]} attributes. Energy should be the fourth attribute.')
+    if g.x.shape[1] == 7:
+      from transforms import OneHotDecodeLayer
+      g = OneHotDecodeLayer()(g)
+      assert g.x.shape[1] == 4, "The provided graph must have either 7 or 4 node features."
+
 
     num_nodes = g.x.shape[0]
 
@@ -84,7 +90,7 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     ax.set_xlabel("η")
     ax.set_ylabel("φ")
     ax.set_zlabel("l")
-    ax.zaxis.set_major_locator(MaxNLocator(integer=True))
+    # ax.zaxis.set_major_locator(MaxNLocator(integer=True))
 
     # Save or display right away
     if save_to_path is not False:
