@@ -45,7 +45,7 @@ class BaseJetGraphGCN(LightningModule):
         self.lr = learning_rate
 
         # Save hyper-parameters to self.hparams (auto-logged by W&B).
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['loss_func'])
 
     @abstractmethod
     def forward(self, mini_batch):
@@ -101,6 +101,7 @@ class Shallow_GCN(BaseJetGraphGCN):
         self.conv3 = GCNConv(self.hidden_channels, self.hidden_channels)
         self.conv4 = GCNConv(self.hidden_channels, self.hidden_channels)
         self.lin = Linear(self.hidden_channels, 1)
+
 
     def forward(self, mini_batch):
         # 0. Unbatch elements in mini batch
