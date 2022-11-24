@@ -41,7 +41,8 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     if g.x.shape[1] == 7:
       from transforms import OneHotDecodeLayer
       g = OneHotDecodeLayer()(g)
-      assert g.x.shape[1] == 4, "The provided graph must have either 7 or 4 node features."
+    
+    assert g.x.shape[1] == 4, "The provided graph must have either 7 or 4 node features."
 
 
     num_nodes = g.x.shape[0]
