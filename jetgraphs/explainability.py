@@ -310,7 +310,7 @@ def display_proponents_and_opponents(
         graph_size = 5 # plot size for a single graph.
         cols =  2 # columns to display graphs in plot.
         rows = num_examples + 1  # rows to display graphs in plot.
-        figsize = (cols*graph_size, (rows+2)*graph_size)
+        figsize = (cols*graph_size, (rows+1)*graph_size)
         fig = plt.figure(figsize=figsize)
          
         # Plot test example at top middle location.
