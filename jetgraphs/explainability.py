@@ -263,7 +263,7 @@ class TracInCPGNN(TracInCP):
 
 def checkpoints_load_func(model, path):
     """
-    Load a chekpoint into model.
+    Load a chekpoint into model. Side effect on model.
     """
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint['state_dict'])
@@ -306,13 +306,13 @@ def display_proponents_and_opponents(
     ):
 
         num_examples = len(proponents_indices) # num of prop and opp for each example
-        graph_size = 5
-        cols =  2
-        rows = num_examples + 1
+        graph_size = 5 # plot size for a single graph.
+        cols =  2 # columns to display graphs in plot.
+        rows = num_examples + 1  # rows to display graphs in plot.
         figsize = (cols*graph_size, (rows+2)*graph_size)
         fig = plt.figure(figsize=figsize)
          
-        # Plot test example.
+        # Plot test example at top middle location.
         true_label = test_example_true_label.item()
         predicted_label = int(test_example_predicted_label.item())
         predicted_prob = test_example_predicted_prob.item()
@@ -343,10 +343,15 @@ def display_proponents_and_opponents(
         
         plt.subplots_adjust( wspace=.1)
         
+        # Save to dir if necessary.
         if save_to_dir is not False:
-            plt.savefig(os.path.join(save_to_dir, f"sample_num_{sample_num}.pdf"))
+            os.makedirs(save_to_dir, exist_ok=True)
+            date = datetime.datetime.today()
+            form_date = f'{date.year}-{date.month}-{date.day}-{date.hour}:{date.minute}'
+            plt.savefig(os.path.join(save_to_dir, f"{form_date}_{sample_num}.pdf"))
             sample_num += 1
             plt.close('all')
+    
     plt.show()
 
 
@@ -354,18 +359,22 @@ class CaptumPipeline:
 
     def __init__(self, model, dataset, train_idx, checkpoint_dir, epochs, captum_impl='fast'):
         
+        print("Initializing Captum pipeline...")
         self.model = model
         self.checkpoint_dir = checkpoint_dir
         self.epochs = epochs
         self.dataset = dataset
 
         # We first load the model with the last checkpoint so that the predictions we make in the next cell will be for the trained model.
+        print("Loading checkpoint...")
         correct_dataset_final_checkpoint = osp.join(self.checkpoint_dir, f'gnn-epoch={epochs-1}.ckpt')
         checkpoints_load_func(model, correct_dataset_final_checkpoint)
 
         # Dataloader for Captum.
+        print("Initializing loader...")
         self.influence_src_dataloader = DataLoader(dataset[train_idx], batch_size=64, shuffle=False)
 
+        print(f"Initializing Captum {captum_impl}...")
         # Prepare Captum
         if captum_impl == 'fast':
             self.tracin_impl = TracInCPFastGNN(
@@ -378,8 +387,20 @@ class CaptumPipeline:
                 batch_size=2048,
                 vectorize=False
             )
+        elif captum_impl == 'base':
+            self.tracin_impl = TracInCPGNN(
+                model=model,
+                influence_src_dataset=self.influence_src_dataloader,
+                checkpoints=checkpoint_dir,
+                checkpoints_load_func=checkpoints_load_func,
+                loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,
+                batch_size=2048,
+                vectorize=False
+            )
 
     def run_captum(self, test_influence_indices):
+        
+        print("Initializing Dataloaders for Captum Pipeline...")
 
         # Prepare samples.
         test_influence_loader = DataLoader(self.dataset[test_influence_indices], batch_size=len(test_influence_indices), shuffle=False)
@@ -388,6 +409,7 @@ class CaptumPipeline:
         self.test_examples_predicted_labels = (self.test_examples_predicted_probs > 0.5).float()
         self.test_examples_true_labels = self.test_examples_batch.y.unsqueeze(1)
 
+        print(f"Going to compute proponents and opponents for {len(test_influence_loader)} indices...")
         
         start_time = datetime.datetime.now()
 
@@ -399,6 +421,7 @@ class CaptumPipeline:
             proponents=True, 
             unpack_inputs=False
         )
+        print("Compute proponents done!")
 
         # Compute opponents.
         o_idx, o_scores = self.tracin_impl.influence(
@@ -408,6 +431,8 @@ class CaptumPipeline:
             proponents=False, 
             unpack_inputs=False
         )
+        print("Compute opponents done!")
+
 
         total_minutes = (datetime.datetime.now() - start_time).total_seconds() / 60.0
         print(
@@ -419,10 +444,12 @@ class CaptumPipeline:
         self.opponents_idx, self.opponents_scores = o_idx, o_scores
     
     def display_results(self, save_to_dir=False):
+        print("Rebuilding dataset for displaying results...")
         src_dataset = []
         for x in self.influence_src_dataloader:
             src_dataset.extend(x.to_data_list())
 
+        print("Displaying Captum results...")
         display_proponents_and_opponents(
             self.test_examples_batch.to_data_list(), 
             src_dataset, 
