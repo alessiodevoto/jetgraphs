@@ -317,7 +317,7 @@ def display_proponents_and_opponents(
         predicted_label = int(test_example_predicted_label.item())
         predicted_prob = test_example_predicted_prob.item()
         title = f"True label: {true_label}, predicted label: {predicted_label},  predicted prob: {predicted_prob:.2f}"
-        ax = fig.add_subplot(rows, 3, 2, projection="3d")
+        ax = fig.add_subplot(rows, 2, 1, projection="3d")
         ax.set_title(title)
         plot_jet_graph(g=test_example, ax=ax, **kwargs)
         
