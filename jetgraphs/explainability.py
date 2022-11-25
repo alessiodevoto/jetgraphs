@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import Any, Optional, Tuple
 import os.path as osp
 import datetime
@@ -364,6 +365,10 @@ class CaptumPipeline:
         self.checkpoint_dir = checkpoint_dir
         self.epochs = epochs
         self.dataset = dataset
+
+        # If lightning was used, we should clean the directory from non-checkpoint files.
+        if os.path.exists(os.path.join(checkpoint_dir, 'lightning_logs')):
+            shutil.rmtree(os.path.join(checkpoint_dir, 'lightning_logs'))
 
         # We first load the model with the last checkpoint so that the predictions we make in the next cell will be for the trained model.
         print("Loading checkpoint...")
