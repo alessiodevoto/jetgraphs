@@ -448,7 +448,7 @@ class CaptumPipeline:
         self.proponents_idx, self.proponents_scores = p_idx, p_scores
         self.opponents_idx, self.opponents_scores = o_idx, o_scores
     
-    def display_results(self, save_to_dir=False):
+    def display_results(self, save_to_dir=False, **kwargs):
         print("Rebuilding dataset for displaying results...")
         src_dataset = []
         for x in self.influence_src_dataloader:
@@ -463,4 +463,5 @@ class CaptumPipeline:
             self.test_examples_predicted_probs, 
             self.proponents_idx, 
             self.opponents_idx,
-            save_to_dir)
+            save_to_dir, 
+            **kwargs)
