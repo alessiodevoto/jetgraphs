@@ -1,4 +1,0 @@
-hidden_channels: 32
-node_feat_size: 7
-use_edge_attr: false
-learning_rate: 0.001
