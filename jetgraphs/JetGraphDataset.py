@@ -435,10 +435,13 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         noise_subset_1 = data_list[-noise_graphs:]
         processed_data_list = signal_subset + noise_subset_0 + noise_subset_1
 
-        # Apply transforms and filter.
+        
+        print("[Processing] Filtering out unwanted graphs...")  
+        processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
+
         if self.pre_filter is not None:
             print("[Processing] Filtering out unwanted graphs...")  
-            processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
+            processed_data_list = [data for data in tqdm(processed_data_list) if self.pre_filter(data)]
 
         if self.pre_transform is not None:
             print("[Processing] Applying pre transform...")
