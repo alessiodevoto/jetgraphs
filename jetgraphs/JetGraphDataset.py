@@ -277,7 +277,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
-
+        
         print(f"Loaded dataset with name {dataset_name}, containing subset of {subset}")
         if subset != self.subset:
             print('This dataset contains a different number of nodes or has different settings. Processing graphs again.')
@@ -435,9 +435,9 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         noise_subset_1 = data_list[-noise_graphs:]
         processed_data_list = signal_subset + noise_subset_0 + noise_subset_1
 
-        
-        print("[Processing] Filtering out unwanted graphs...")  
-        processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
+        self.pre_filter = lambda x : data.x.shape[0] >= self.min_num_nodes
+        # print("[Processing] Filtering out unwanted graphs...")  
+        # processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
 
         if self.pre_filter is not None:
             print("[Processing] Filtering out unwanted graphs...")  
