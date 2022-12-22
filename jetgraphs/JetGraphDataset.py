@@ -276,16 +276,16 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         self.verbose = verbose 
         
         super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
+        self.data, self.slices, min_num_nodes, subset = torch.load(self.processed_paths[0])
         
-        print(f"Loaded dataset with name {dataset_name}, containing subset of {subset}")
-        if subset != self.subset:
-            print('This dataset contains a different number of nodes or has different settings. Processing graphs again.')
-            self.process(dataset_name=dataset_name)
-            self.data, self.slices, dataset_name, subset = torch.load(self.processed_paths[0])
+        print(f"Loaded dataset containing subset of {subset}")
+        if subset != self.subset or min_num_nodes != self.min_num_nodes:
+            print('The loaded dataset has different settings from the ones requested. Processing graphs again.')
+            self.process()
+            self.data, self.slices, min_num_nodes, subset = torch.load(self.processed_paths[0])
 
 
-        self.dataset_name = dataset_name
+        
         
 
     def download(self):
@@ -403,19 +403,12 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         torch.save(data_list, self.pre_processed_path)
     
 
-    def process(self, dataset_name=None):
+    def process(self):
         # If raw data was not preprocessed, do it now.
         # This should be done only once after download.
         if not os.path.exists(self.pre_processed_path):
             self._preprocess()
         
-        # Dataset name so that we can keep track of amount of nodes in each processed version.
-        if dataset_name:
-            self.dataset_name = dataset_name
-        else:
-            self.dataset_name = f"min_nodes_{self.min_num_nodes}" if not dataset_name else dataset_name
-            
-
         # Load preprocessed graphs.
         print("[Processing] Loading preprocessed data...")
         data_list = torch.load(self.pre_processed_path) 
@@ -435,9 +428,9 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         noise_subset_1 = data_list[-noise_graphs:]
         processed_data_list = signal_subset + noise_subset_0 + noise_subset_1
 
-        self.pre_filter = lambda x : data.x.shape[0] >= self.min_num_nodes
-        # print("[Processing] Filtering out unwanted graphs...")  
-        # processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
+        # self.pre_filter = lambda x : data.x.shape[0] >= self.min_num_nodes
+        print(f"[Processing] Filtering out graphs with less than {self.min_num_nodes} nodes...")  
+        processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
 
         if self.pre_filter is not None:
             print("[Processing] Filtering out unwanted graphs...")  
@@ -449,11 +442,11 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
 
         # Save obtained torch tensor.
         data, slices = self.collate(processed_data_list)
-        torch.save((data, slices, self.dataset_name, self.subset), self.processed_paths[0])
+        torch.save((data, slices, self.min_num_nodes, self.subset), self.processed_paths[0])
 
     # AUXILIARY FUNCTIONS
     def stats(self):
-        print(f'\n*** JetGraph Dataset version:{self.dataset_name} ***\n')
+        print(f'\n*** JetGraph Dataset ***\n')
         print(f'Number of classes: {self.num_classes}')
         print(f'Number of graphs: {len(self)}')
         print(f'Dataset is directed: {self.is_directed}')
