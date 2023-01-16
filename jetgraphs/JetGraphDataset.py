@@ -392,7 +392,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 graph_class = 0 if is_noise else 1
                 # Last column is absolute energy, not useful from now, so we delete it.
                 nodes = nodes[:,:-1]
-                graph = Data(x=nodes, edge_attr=None, edge_index=None, y=graph_class)
+                graph = Data(x=nodes, edge_attr=None, edge_index=None, y=graph_class, id=str(gid))
                 data_list.append(graph)
                 
             print(f"[Preprocessing] Done preprocessing files in {subdir}")
