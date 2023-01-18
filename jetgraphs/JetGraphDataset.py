@@ -9,6 +9,8 @@ from torch_geometric.data import InMemoryDataset, download_url, Data
 from .utils import _repr
 
 
+DATA_DIRS = ["Signal_v6", "Background2_v6", "Background3_v6"]
+
 TOTAL_GRAPHS = 100000 
 GRAPHS_IN_SIGNAL_SUBDIR = 50000
 GRAPHS_IN_NOISE_SUBDIR = 25000
@@ -40,7 +42,8 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 transform=None, 
                 pre_transform=None, 
                 pre_filter=None,
-                post_filter=None
+                post_filter=None,
+                remove_download=False
                 ):
         
         self.url = url
@@ -48,6 +51,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         self.min_num_nodes = min_num_nodes
         self.verbose = verbose 
         self.post_filter = post_filter
+        self.remove_download = remove_download
         
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices, min_num_nodes, subset, post_filter = torch.load(self.processed_paths[0])
@@ -75,7 +79,9 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         tar.close()
 
         # Clean.
-        os.remove(osp.join(self.raw_dir, 'download.tar'))
+        if self.remove_download:
+            print("Removing compressed download...")
+            os.remove(osp.join(self.raw_dir, 'download.tar'))
 
         # Rename files.
         self._rename_filenames()
@@ -86,20 +92,22 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         Filenames are poorly named and so we have to rename them for easier processing.
         This function just renames all downloaded files to make the processing clear.
         """
+        
         print("Moving Directories to raw directory...")
         pattern = os.path.join(self.raw_dir, "**", "*_v6")
         data_dirs = glob.glob(pattern, recursive=True) # should return Signal_v6, Background2_v6, Background3_v6 
         for subdir in data_dirs:
             shutil.move(subdir, self.raw_dir)
         
-        # Remove anything which is not Signal_v6, Background2_v6, Background3_v6 from raw_dir
-        possibly_trash = os.listdir(self.raw_dir)
-        trash = [x for x in possibly_trash if x not in data_dirs]
-        for trash_dir in trash:
+        # Remove anything which is not Signal_v6, Background2_v6, Background3_v6 or download from raw_dir
+        possibly_trash = [os.path.join(self.raw_dir,subdir) for subdir in os.listdir(self.raw_dir)]
+        trash = [x for x in possibly_trash if not "v6" in x or not "download" in x]
+        print("Removing: ", trash)
+        for t in trash:
             try:
-                os.rmdir(trash_dir)
+                os.remove(t)
             except:
-                os.remove(trash_dir)
+                os.rmdir(t)
 
         print("Renaming files...")
         # Add the 'a0' prefix to files for layer 0.
@@ -123,6 +131,10 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
 
     def _preprocess(self):
         print("[Preprocessing] Preprocessing data to build dataset of graphs without edges.")
+
+        if not os.path.exists(os.path.join(self.raw_dir, "Signal_v6")):
+            print("Probably something went wrong during download. Trying to rename files again...")
+            self._rename_filenames()
         
         data_list = []
         # Attributes to retrieve for each graph.
