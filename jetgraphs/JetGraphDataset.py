@@ -95,7 +95,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         
         # Remove anything which is not Signal_v6, Background2_v6, Background3_v6 or download from raw_dir
         possibly_trash = [os.path.join(self.raw_dir,subdir) for subdir in os.listdir(self.raw_dir)]
-        trash = [x for x in possibly_trash if not "v6" in x or not "download" in x]
+        trash = [x for x in possibly_trash if not "v6" in x and not "download" in x]
         print("Removing: ", trash)
         for t in trash:
             try:
