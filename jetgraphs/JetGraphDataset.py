@@ -98,6 +98,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         print("Removing: ", possibly_trash)
         for t in possibly_trash:
             if "v6" not in t and "download" not in t:
+                print(f"Removing {t}")
                 try:
                     os.remove(t)
                 except:
