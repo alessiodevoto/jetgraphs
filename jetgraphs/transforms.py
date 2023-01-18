@@ -5,13 +5,15 @@ from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_scipy_sparse_matrix, to_undirected
 import torch
 from torch_geometric.data import Data
+from torch.nn.functional import one_hot as one_hot_encode
+
 
 """
 This file contains transforms for jetgraph Data objects. 
 """
 
 
-def connected_components(g, return_subgraphs=False, directed=False):
+def _connected_components(g, return_subgraphs=False, directed=False):
     """
     Compute connected components of graph g.
     :parameter g : graph to use as Data object.
@@ -31,6 +33,7 @@ def connected_components(g, return_subgraphs=False, directed=False):
     
     num_components, component = sp.csgraph.connected_components(adj, directed=directed)
     return num_components
+
 
 class BuildEdges(BaseTransform):
     """
@@ -135,7 +138,7 @@ class NumberOfSubgraphs(BaseTransform):
         self.return_subgraphs = return_subgraphs
 
     def __call__(self, data: Data):
-        ret_value = connected_components(data, self.return_subgraphs, self.directed)
+        ret_value = _connected_components(data, self.return_subgraphs, self.directed)
         if self.return_subgraphs:
             data.num_subgraphs = ret_value[0]
             data.subgraphs = ret_value[1]
@@ -145,6 +148,7 @@ class NumberOfSubgraphs(BaseTransform):
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.return_subgraphs})'
+
 
 class ConnectedComponentsRemoveLargest(BaseTransform):
     """
@@ -158,7 +162,7 @@ class ConnectedComponentsRemoveLargest(BaseTransform):
         self.directed = directed
         
     def __call__(self, data: Data) -> list:
-        _, _subgraphs = connected_components(data, return_subgraphs=True, directed=self.directed)
+        _, _subgraphs = _connected_components(data, return_subgraphs=True, directed=self.directed)
         subgraphs = sorted(_subgraphs, key=lambda g : g.x.shape[0])[:-1]
         return subgraphs
 
@@ -179,6 +183,7 @@ class NumLayers(BaseTransform):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
 
+
 class LayersNum(BaseTransform):
     """
     Compute layers' numbers in a jet graph.
@@ -193,7 +198,7 @@ class LayersNum(BaseTransform):
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
 
-from torch.nn.functional import one_hot as one_hot_encode
+
 class OneHotEncodeLayer(BaseTransform):
   """
   One hot encode the third attribute of each node, which is a integer from 0 to 3.
@@ -203,6 +208,7 @@ class OneHotEncodeLayer(BaseTransform):
     data.x = torch.cat([data.x[:,:2], one_hot_encoding, data.x[:,-1].unsqueeze(1)], dim=-1)
     return data
 
+
 class OneHotDecodeLayer(BaseTransform):
   """
   One hot encode the third attribute of each node, which is a integer from 0 to 3.
@@ -211,3 +217,19 @@ class OneHotDecodeLayer(BaseTransform):
     decoded_layer = torch.argmax(data.x[:, 2:6], dim=1)
     data.x = torch.cat([data.x[:,:2], decoded_layer.view(-1, 1), data.x[:,-1].unsqueeze(1)], dim=-1)
     return data
+
+
+class GraphFilter(BaseTransform):
+    """
+    A filter that returns True if graph has at least min_num_nodes nodes.
+    """
+    def __init__(self, min_num_nodes : int):
+        self.min_num_nodes = min_num_nodes
+
+    def __call__(self, data: Data):
+        if data.x.shape[0]>=self.min_num_nodes:
+            return True
+        return False
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.min_num_nodes})'

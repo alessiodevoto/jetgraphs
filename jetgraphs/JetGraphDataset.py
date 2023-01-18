@@ -8,7 +8,7 @@ import torch
 import networkx as nx
 from torch_geometric.data import InMemoryDataset, download_url, extract_zip, Data
 from torch_geometric.utils.convert import from_networkx
-from .transforms import connected_components
+from .transforms import _connected_components
 
 
 """
@@ -216,7 +216,7 @@ class JetGraphDatasetInMemory(InMemoryDataset):
     @property
     def subgraphs_stats(self):
         # average number and standard deviation of subgraphs per graph. 
-        subgraphs = torch.tensor([connected_components(g) for g in self]).float()
+        subgraphs = torch.tensor([_connected_components(g) for g in self]).float()
         return subgraphs.mean(), subgraphs.std()
 
 """
@@ -268,12 +268,15 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 verbose = False, 
                 transform=None, 
                 pre_transform=None, 
-                pre_filter=None):
+                pre_filter=None,
+                post_filter=None
+                ):
         
         self.url = url
         self.subset = subset
         self.min_num_nodes = min_num_nodes
         self.verbose = verbose 
+        self.post_filter = post_filter
         
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices, min_num_nodes, subset = torch.load(self.processed_paths[0])
@@ -284,9 +287,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             self.process()
             self.data, self.slices, min_num_nodes, subset = torch.load(self.processed_paths[0])
 
-
-        
-        
+ 
 
     def download(self):
         """
@@ -334,6 +335,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 os.rename(filename, filename.replace(f'{c}6', ''))
         print("Done renaming files!")
     
+
     def _preprocess(self):
         print("[Preprocessing] Preprocessing data to build dataset of graphs without edges.")
         
@@ -433,12 +435,16 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
 
         if self.pre_filter is not None:
-            print("[Processing] Filtering out unwanted graphs...")  
+            print("[Processing] Pre-filtering out unwanted graphs...")  
             processed_data_list = [data for data in tqdm(processed_data_list) if self.pre_filter(data)]
 
         if self.pre_transform is not None:
             print("[Processing] Applying pre transform...")
             processed_data_list = [self.pre_transform(data) for data in tqdm(processed_data_list)]
+        
+        if self.post_filter is not None:
+            print("[Processing] Post-filtering out unwanted graphs...")  
+            processed_data_list = [data for data in tqdm(processed_data_list) if self.post_filter(data)]
 
         # Save obtained torch tensor.
         data, slices = self.collate(processed_data_list)
