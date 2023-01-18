@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import os.path as osp
 from tqdm import tqdm
 import tarfile
@@ -86,8 +86,22 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         Filenames are poorly named and so we have to rename them for easier processing.
         This function just renames all downloaded files to make the processing clear.
         """
-        print("Renaming files...")
+        print("Moving Directories to raw directory...")
+        pattern = os.path.join(self.raw_dir, "**", "*_v6")
+        data_dirs = glob.glob(pattern, recursive=True) # should return Signal_v6, Background2_v6, Background3_v6 
+        for subdir in data_dirs:
+            shutil.move(subdir, self.raw_dir)
+        
+        # Remove anything which is not Signal_v6, Background2_v6, Background3_v6 from raw_dir
+        possibly_trash = os.listdir(self.raw_dir)
+        trash = [x for x in possibly_trash if x not in data_dirs]
+        for trash_dir in trash:
+            try:
+                os.rmdir(trash_dir)
+            except:
+                os.remove(trash_dir)
 
+        print("Renaming files...")
         # Add the 'a0' prefix to files for layer 0.
         for c in ['s', 'b']:     # signal, background
             # match any .h5 file in self.raw_dir that does not start with 'a0'.
