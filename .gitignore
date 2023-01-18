@@ -1,8 +1,7 @@
-.DS_Store
-.idea/*
-.gitignore
 .outputs/*
+test*
 **__pycache__
 requirements.txt
 jetgraph_dataset_example.ipynb
 test_model.ipynb
+.DS_Store
