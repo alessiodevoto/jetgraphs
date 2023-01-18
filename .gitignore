@@ -2,8 +2,7 @@
 .idea/*
 .gitignore
 .outputs/*
-__pycache__/*
-test_dataset.ipynb
-JetGraphDataset_v4_analysis_2.ipynb
+**__pycache__
 requirements.txt
 jetgraph_dataset_example.ipynb
+test_model.ipynb

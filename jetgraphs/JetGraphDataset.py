@@ -8,9 +8,6 @@ import torch
 from torch_geometric.data import InMemoryDataset, download_url, Data
 from .utils import _repr
 
-
-DATA_DIRS = ["Signal_v6", "Background2_v6", "Background3_v6"]
-
 TOTAL_GRAPHS = 100000 
 GRAPHS_IN_SIGNAL_SUBDIR = 50000
 GRAPHS_IN_NOISE_SUBDIR = 25000
@@ -29,7 +26,6 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
     :parameter url: a String containing the url to the dataset.
     :parameter root: where to download (or look for) the dataset.
     :parameter subset: a String defining the percentage of dataset to be used. e.g. '10.5%'.
-    :parameter min_num_nodes: minimum number of nodes that a graph must have not to be excluded.
     :parameter verbose: whether to display more info while processing graphs.
     """
     def __init__(
@@ -37,7 +33,6 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 url, 
                 root,
                 subset='100%', 
-                min_num_nodes=1,
                 verbose = False, 
                 transform=None, 
                 pre_transform=None, 
@@ -48,19 +43,18 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         
         self.url = url
         self.subset = subset
-        self.min_num_nodes = min_num_nodes
         self.verbose = verbose 
         self.post_filter = post_filter
         self.remove_download = remove_download
         
         super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices, min_num_nodes, subset, post_filter = torch.load(self.processed_paths[0])
+        self.data, self.slices, subset, post_filter = torch.load(self.processed_paths[0])
         
         print(f"Loaded dataset containing subset of {subset}")
-        if subset != self.subset or min_num_nodes != self.min_num_nodes or post_filter != _repr(self.post_filter):
+        if subset != self.subset or post_filter != _repr(self.post_filter):
             print('The loaded dataset has different settings from the ones requested. Processing graphs again.')
             self.process()
-            self.data, self.slices, min_num_nodes, subset, post_filter = torch.load(self.processed_paths[0])
+            self.data, self.slices, subset, post_filter = torch.load(self.processed_paths[0])
             
  
 
@@ -228,8 +222,8 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         processed_data_list = signal_subset + noise_subset_0 + noise_subset_1
 
         # self.pre_filter = lambda x : data.x.shape[0] >= self.min_num_nodes
-        print(f"[Processing] Filtering out graphs with less than {self.min_num_nodes} nodes...")  
-        processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
+        # print(f"[Processing] Filtering out graphs with less than {self.min_num_nodes} nodes...")  
+        # processed_data_list = [data for data in tqdm(processed_data_list) if data.x.shape[0]>=self.min_num_nodes]
 
         if self.pre_filter is not None:
             print("[Processing] Pre-filtering out unwanted graphs...")  
@@ -245,7 +239,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
 
         # Save obtained torch tensor.
         data, slices = self.collate(processed_data_list)
-        torch.save((data, slices, self.min_num_nodes, self.subset, _repr(self.post_filter)), self.processed_paths[0])
+        torch.save((data, slices, self.subset, _repr(self.post_filter)), self.processed_paths[0])
 
     # AUXILIARY FUNCTIONS
     def stats(self):
