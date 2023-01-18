@@ -8,6 +8,7 @@ import torch
 from torch_geometric.data import InMemoryDataset, download_url, Data
 from .utils import _repr
 
+
 TOTAL_GRAPHS = 100000 
 GRAPHS_IN_SIGNAL_SUBDIR = 50000
 GRAPHS_IN_NOISE_SUBDIR = 25000
@@ -93,16 +94,6 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         for subdir in data_dirs:
             shutil.move(subdir, self.raw_dir)
         
-        # Remove anything which is not Signal_v6, Background2_v6, Background3_v6 or download from raw_dir
-        possibly_trash = [os.path.join(self.raw_dir,subdir) for subdir in os.listdir(self.raw_dir)]
-        print("Removing: ", possibly_trash)
-        for t in possibly_trash:
-            if "v6" not in t and "download" not in t:
-                print(f"Removing {t}")
-                try:
-                    os.remove(t)
-                except:
-                    os.rmdir(t)
 
         print("Renaming files...")
         # Add the 'a0' prefix to files for layer 0.
@@ -138,8 +129,10 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         # There should be 3 subdirectories: Signal, Background 1 and Background 2.
         
         # Process each subdirectory separately. 
-        subdirs = os.listdir(self.raw_dir)
-        for subdir in subdirs:
+        pattern = os.path.join(self.raw_dir, "*_v6")
+        data_dirs = glob.glob(pattern)
+        print(data_dirs)
+        for subdir in data_dirs:
             print(f"[Preprocessing] Reading files in {subdir}...")
             is_noise = is_noise_subdir(subdir) 
             num_graphs = GRAPHS_IN_NOISE_SUBDIR if is_noise else GRAPHS_IN_SIGNAL_SUBDIR
@@ -149,7 +142,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
             for layer in range(0,4):
                 dataset_by_layer[layer] = {}
                 for attribute in attributes:
-                    filepath = os.path.join(self.raw_dir, subdir, f"a{layer}_tupleGraph_bar{attribute}.h5")
+                    filepath = os.path.join(subdir, f"a{layer}_tupleGraph_bar{attribute}.h5")
                     if self.verbose:
                         print(f"[Preprocessing] Reading: {filepath}")
                     dataset_by_layer[layer][attribute] = dd.io.load(filepath)
