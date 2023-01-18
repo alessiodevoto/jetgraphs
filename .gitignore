@@ -1,5 +1,5 @@
 .outputs/*
-test*
+test/
 **__pycache__
 requirements.txt
 jetgraph_dataset_example.ipynb
