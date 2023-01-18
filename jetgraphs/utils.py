@@ -10,6 +10,7 @@ from pandas import DataFrame
 from collections.abc import Iterable
 import seaborn as sns
 import os
+import re
 
 
 """
@@ -203,3 +204,8 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
       plt.close('all')
   else:
       plt.show()
+
+def _repr(obj) -> str:
+    if obj is None:
+        return 'None'
+    return re.sub('(<.*?)\\s.*(>)', r'\1\2', obj.__repr__())

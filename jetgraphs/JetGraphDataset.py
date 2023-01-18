@@ -9,6 +9,7 @@ import networkx as nx
 from torch_geometric.data import InMemoryDataset, download_url, extract_zip, Data
 from torch_geometric.utils.convert import from_networkx
 from .transforms import _connected_components
+from .utils import _repr
 
 
 """
@@ -279,14 +280,14 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         self.post_filter = post_filter
         
         super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices, min_num_nodes, subset = torch.load(self.processed_paths[0])
+        self.data, self.slices, min_num_nodes, subset, post_filter = torch.load(self.processed_paths[0])
         
         print(f"Loaded dataset containing subset of {subset}")
-        if subset != self.subset or min_num_nodes != self.min_num_nodes:
+        if subset != self.subset or min_num_nodes != self.min_num_nodes or post_filter != _repr(self.post_filter):
             print('The loaded dataset has different settings from the ones requested. Processing graphs again.')
             self.process()
-            self.data, self.slices, min_num_nodes, subset = torch.load(self.processed_paths[0])
-
+            self.data, self.slices, min_num_nodes, subset, post_filter = torch.load(self.processed_paths[0])
+            
  
 
     def download(self):
@@ -448,7 +449,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
 
         # Save obtained torch tensor.
         data, slices = self.collate(processed_data_list)
-        torch.save((data, slices, self.min_num_nodes, self.subset), self.processed_paths[0])
+        torch.save((data, slices, self.min_num_nodes, self.subset, _repr(self.post_filter)), self.processed_paths[0])
 
     # AUXILIARY FUNCTIONS
     def stats(self):
