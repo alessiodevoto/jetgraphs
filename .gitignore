@@ -1,5 +1,4 @@
 .outputs/*
-/examples
 test/
 **__pycache__
 requirements.txt
