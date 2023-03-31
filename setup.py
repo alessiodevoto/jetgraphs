@@ -7,7 +7,7 @@ setup(
     packages=['jetgraphs'],
     install_requires=[
         'numpy',
-        'matplotlib>=3.2.2',
+        'matplotlib==3.5.1',
         'networkx',
         'pytorch_lightning',
         'scikit-learn',
