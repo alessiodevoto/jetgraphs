@@ -17,8 +17,7 @@ setup(
         'torchmetrics',
         'tqdm'], # TODO add here torch geometric!
     version='0.1',
-    # The license can be anything you like
-    # license='MIT',
+    license='MIT',
     description='A package to manipulate and plot jetgraphs',
     long_description=open('README.md').read(),
 )
