@@ -50,7 +50,7 @@ class BaseJetGraphGCN(LightningModule):
         self.save_hyperparameters()
 
     @abstractmethod
-    def forward(self, x, edge_index, mini_batch):#mini_batch):#x, edge_index, mini_batch):#switch for GNNExplainer
+    def forward(self, mini_batch):#x, edge_index, mini_batch):#switch for GNNExplainer
         pass
 
     def training_step(self, batch, batch_idx):
@@ -362,7 +362,7 @@ class Arma(BaseJetGraphGCN):
         self.lin0 = Linear(self.hidden_channels, self.hidden_channels)
         self.lin = Linear(self.hidden_channels, 1)
 
-    def forward(self,  x, edge_index, mini_batch):#mini_batch):#x, edge_index, mini_batch):#switch for GNNExplainer
+    def forward(self, mini_batch):#x, edge_index, mini_batch):#switch for GNNExplainer
         # 0. Unbatch elements in mini batch
         x, edge_index, batch = mini_batch.x, mini_batch.edge_index, mini_batch.batch
         edge_attr = mini_batch.edge_attr if self.use_edge_attr else None
