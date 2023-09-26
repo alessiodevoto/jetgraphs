@@ -62,7 +62,7 @@ class BuildEdges(BaseTransform):
     def __call__(self, data: Data) -> Data:
         nodes = data.x
         # Compute distances for each pair of nodes, using eta and phi as coordinates.
-        distances = torch.cdist(nodes[:,:2], nodes[:,:2], p=self.distance_p) # (num_nodes, num_nodes), distances[i][j] = distance between node i and node j
+        distances = torch.cdist(abs(nodes[:,:2]), abs(nodes[:,:2]), p=self.distance_p) # (num_nodes, num_nodes), distances[i][j] = distance between node i and node j
         
         # Initialize array with all possible *directed* edges, going from
         # lower to higher layers of graph (0 -> 1 -> 2 -> 3).

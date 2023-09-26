@@ -10,7 +10,7 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 import matplotlib.pyplot as plt
-from .utils import plot_jet_graph
+from utils import plot_jet_graph
 
 from captum.influence._utils.common import (
     _jacobian_loss_wrt_inputs,
@@ -38,7 +38,6 @@ def _basic_computation_tracincp_fast(
   For instances of TracInCPFast and children classes, computation of influence scores
   or self influence scores repeatedly calls this function for different checkpoints
   and batches.
-
   Args:
       influence_instance (TracInCPFast): A instance of TracInCPFast or its children.
       inputs (Tuple of Any): A batch of examples, which could be a training batch
@@ -313,7 +312,7 @@ def display_proponents_and_opponents(
         figsize = (cols*graph_size, (rows+1)*graph_size)
         fig = plt.figure(figsize=figsize)
          
-        # Plot test example at top middle location.
+        # Plot test example at top middle location. ##commented for large samples
         true_label = test_example_true_label.item()
         predicted_label = int(test_example_predicted_label.item())
         predicted_prob = test_example_predicted_prob.item()
@@ -322,7 +321,7 @@ def display_proponents_and_opponents(
         ax.set_title(title)
         plot_jet_graph(g=test_example, ax=ax, **kwargs)
         
-        # Plot proponents on left column.
+        # Plot proponents on left column.####commented for large samples
         idx = 3
         test_example_graphs = [correct_dataset[i] for i in test_example_proponents]
         for i in range(len(test_example_proponents)):
@@ -372,36 +371,19 @@ class CaptumPipeline:
 
         # We first load the model with the last checkpoint so that the predictions we make in the next cell will be for the trained model.
         print("Loading checkpoint...")
-        correct_dataset_final_checkpoint = osp.join(self.checkpoint_dir, f'gnn-epoch={epochs-1}.ckpt')
+        correct_dataset_final_checkpoint = osp.join(self.checkpoint_dir, f'gcn-epoch=best.ckpt')
         checkpoints_load_func(model, correct_dataset_final_checkpoint)
 
         # Dataloader for Captum.
         print("Initializing loader...")
-        self.influence_src_dataloader = DataLoader(dataset[train_idx], batch_size=64, shuffle=False)
+        self.influence_src_dataloader = DataLoader(dataset[train_idx], batch_size=512, num_workers= 96, shuffle=False)#, batch_size=64, shuffle=False)
 
         print(f"Initializing Captum {captum_impl}...")
         # Prepare Captum
         if captum_impl == 'fast':
-            self.tracin_impl = TracInCPFastGNN(
-                model=model,
-                final_fc_layer=list(model.children())[-1],
-                influence_src_dataset=self.influence_src_dataloader,
-                checkpoints=checkpoint_dir,
-                checkpoints_load_func=checkpoints_load_func,
-                loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,
-                batch_size=2048,
-                vectorize=False
-            )
+            self.tracin_impl = TracInCPFastGNN(model=model,final_fc_layer=list(model.children())[-1],influence_src_dataset=self.influence_src_dataloader,checkpoints=checkpoint_dir,checkpoints_load_func=checkpoints_load_func,loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,batch_size=2048,vectorize=False)
         elif captum_impl == 'base':
-            self.tracin_impl = TracInCPGNN(
-                model=model,
-                influence_src_dataset=self.influence_src_dataloader,
-                checkpoints=checkpoint_dir,
-                checkpoints_load_func=checkpoints_load_func,
-                loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,
-                batch_size=2048,
-                vectorize=False
-            )
+            self.tracin_impl = TracInCPGNN(model=model,influence_src_dataset=self.influence_src_dataloader,checkpoints=checkpoint_dir,checkpoints_load_func=checkpoints_load_func,loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,batch_size=2048,vectorize=False)
 
     def run_captum(self, test_influence_indices):
         
@@ -411,10 +393,10 @@ class CaptumPipeline:
         test_influence_loader = DataLoader(self.dataset[test_influence_indices], batch_size=len(test_influence_indices), shuffle=False)
         self.test_examples_batch = next(iter(test_influence_loader))
         self.test_examples_predicted_probs = torch.sigmoid(self.model(self.test_examples_batch)) 
-        self.test_examples_predicted_labels = (self.test_examples_predicted_probs > 0.5).float()
+        self.test_examples_predicted_labels = (self.test_examples_predicted_probs > 0.99).float()#change threshold for better explanation WPs 30 60 75 90
         self.test_examples_true_labels = self.test_examples_batch.y.unsqueeze(1)
 
-        print(f"Going to compute proponents and opponents for {len(test_influence_loader)} indices...")
+        print(f"Going to compute proponents and opponents for {len(test_influence_indices)} indices...")
         
         start_time = datetime.datetime.now()
 
@@ -422,7 +404,7 @@ class CaptumPipeline:
         p_idx, p_scores = self.tracin_impl.influence(
             inputs = self.test_examples_batch, 
             targets = self.test_examples_true_labels, 
-            k=len(test_influence_indices), 
+            k= 10,#len(test_influence_indices), 
             proponents=True, 
             unpack_inputs=False
         )
@@ -432,7 +414,7 @@ class CaptumPipeline:
         o_idx, o_scores = self.tracin_impl.influence(
             inputs = self.test_examples_batch, 
             targets = self.test_examples_true_labels, 
-            k=len(test_influence_indices), 
+            k= 10,#len(test_influence_indices), 
             proponents=False, 
             unpack_inputs=False
         )
@@ -454,14 +436,18 @@ class CaptumPipeline:
         for x in self.influence_src_dataloader:
             src_dataset.extend(x.to_data_list())
 
-        print("Displaying Captum results...")
-        display_proponents_and_opponents(
-            self.test_examples_batch.to_data_list(), 
-            src_dataset, 
-            self.test_examples_true_labels, 
-            self.test_examples_predicted_labels, 
-            self.test_examples_predicted_probs, 
-            self.proponents_idx, 
-            self.opponents_idx,
-            save_to_dir, 
-            **kwargs)
+        # print("Displaying Captum results...") ###Comment for large samples
+        # display_proponents_and_opponents(
+        #     self.test_examples_batch.to_data_list(), 
+        #     src_dataset, 
+        #     self.test_examples_true_labels, 
+        #     self.test_examples_predicted_labels, 
+        #     self.test_examples_predicted_probs, 
+        #     self.proponents_idx, 
+        #     self.opponents_idx,
+        #     save_to_dir, 
+        #     **kwargs)
+        print("Displaying Captum indices...")
+        print("proponents indices: ", self.proponents_idx)
+        print("opponents indices: ", self.opponents_idx)
+        return self.proponents_idx, self.opponents_idx
