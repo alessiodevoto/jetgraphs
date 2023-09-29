@@ -12,6 +12,7 @@ import seaborn as sns
 import os
 import re
 import sklearn.metrics
+from typing import Callable
 
 """
 Here we have some utility functions to plot a single graph and analyse a jetgraph dataset. 
@@ -132,6 +133,40 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
     # Rename "y" to "class".
     df.rename(columns={'y': 'class'}, inplace=True)
+
+    return df
+
+def dataset_to_pandas(dataset : Iterable, filter : Callable = lambda x : True):
+    """
+    Export an iterable of graphs to a Pandas Dataframe, filtering out some of the graphs.
+    The pandas dataframe will contain a row for each graph. 
+
+    Only the graphs for which the filter function returns true will be added to the DataFrame. 
+    If no filter function is provided, all the graphs will be added to the DataFrame.
+    
+    The columns will be:
+      - the graph.x attribute (a numpy.array)
+      - the graph.y attribute  (int)
+
+    Returns:
+    - a pandas Dataframe 
+
+    Example:
+    >>> def is_interesting(graph):   # only return graphs with y == 0
+    >>>     return graph.y.item() == 0
+    >>> df = dataset_to_pandas(any_dataset_you_like, is_interesting)
+    >>> df.iloc[0,:]
+
+    """
+    data = []
+  
+    for elem in dataset:
+        if filter(elem):
+          g = [elem.y.item(), elem.x.numpy()]
+          data.append(g)
+
+    df = pd.DataFrame(data)
+    df.columns = ['class', 'node features']
 
     return df
 
