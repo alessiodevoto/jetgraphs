@@ -103,9 +103,6 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
       plt.close('all')
     
       
-    
-    
-    
 def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     """
     Export an iterable of graphs to a Pandas Dataframe. If no additional col_names are provided, 
@@ -138,6 +135,7 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
     return df
 
+
 def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     """
     Need a docstring here. @Carmigna
@@ -166,6 +164,7 @@ def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     df.columns = col_names
 
     return df
+
 
 def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path="", format='pdf'):
   """
@@ -235,18 +234,16 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
   else:
       plt.show()
 
+
 def _repr(obj) -> str:
     if obj is None:
         return 'None'
     return re.sub('(<.*?)\\s.*(>)', r'\1\2', obj.__repr__())
 
 
-
-
-#A simple metrics Plotter
 def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metrics_GNN.pdf'):
     """
-    Need a docstring here @Carmigna
+    A simple metrics Plotter.
     """
     y_pred1, y_true1 = (odd1 > odd_th), (tdd1 > tdd_th) 
     y_pred2, y_true2 = (odd2 > odd_th), (tdd2 > tdd_th)
