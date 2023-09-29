@@ -385,7 +385,7 @@ class CaptumPipeline:
         elif captum_impl == 'base':
             self.tracin_impl = TracInCPGNN(model=model,influence_src_dataset=self.influence_src_dataloader,checkpoints=checkpoint_dir,checkpoints_load_func=checkpoints_load_func,loss_fn=torch.nn.functional.binary_cross_entropy_with_logits,batch_size=2048,vectorize=False)
 
-    def run_captum(self, test_influence_indices):
+    def run_captum(self, test_influence_indices, k=10):
         
         print("Initializing Dataloaders for Captum Pipeline...")
 
@@ -404,7 +404,7 @@ class CaptumPipeline:
         p_idx, p_scores = self.tracin_impl.influence(
             inputs = self.test_examples_batch, 
             targets = self.test_examples_true_labels, 
-            k= 10,#len(test_influence_indices), 
+            k= k,#len(test_influence_indices), 
             proponents=True, 
             unpack_inputs=False
         )
@@ -414,7 +414,7 @@ class CaptumPipeline:
         o_idx, o_scores = self.tracin_impl.influence(
             inputs = self.test_examples_batch, 
             targets = self.test_examples_true_labels, 
-            k= 10,#len(test_influence_indices), 
+            k= k,#len(test_influence_indices), 
             proponents=False, 
             unpack_inputs=False
         )
@@ -430,23 +430,24 @@ class CaptumPipeline:
         self.proponents_idx, self.proponents_scores = p_idx, p_scores
         self.opponents_idx, self.opponents_scores = o_idx, o_scores
     
-    def display_results(self, save_to_dir=False, **kwargs):
+    def display_results(self, display = False, save_to_dir=False, **kwargs):
         print("Rebuilding dataset for displaying results...")
         src_dataset = []
         for x in self.influence_src_dataloader:
             src_dataset.extend(x.to_data_list())
 
-        # print("Displaying Captum results...") ###Comment for large samples
-        # display_proponents_and_opponents(
-        #     self.test_examples_batch.to_data_list(), 
-        #     src_dataset, 
-        #     self.test_examples_true_labels, 
-        #     self.test_examples_predicted_labels, 
-        #     self.test_examples_predicted_probs, 
-        #     self.proponents_idx, 
-        #     self.opponents_idx,
-        #     save_to_dir, 
-        #     **kwargs)
+        if display:
+            print("Displaying Captum results...") 
+            display_proponents_and_opponents(
+                self.test_examples_batch.to_data_list(), 
+                src_dataset, 
+                self.test_examples_true_labels, 
+                self.test_examples_predicted_labels, 
+                self.test_examples_predicted_probs, 
+                self.proponents_idx, 
+                self.opponents_idx,
+                save_to_dir, 
+                **kwargs)
         print("Displaying Captum indices...")
         print("proponents indices: ", self.proponents_idx)
         print("opponents indices: ", self.opponents_idx)
