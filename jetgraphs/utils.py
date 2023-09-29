@@ -140,13 +140,7 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
 def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     """
-    Export an iterable of graphs to a Pandas DataFrame. If no additional col_names are provided,
-    then the pandas DataFrame will have a row for each graph in dataset,
-    with ['num_nodes', 'num_edges', 'num_layers'] columns.
-
-    Returns:
-    - a Pandas DataFrame
-    - a dataset name (str)
+    Need a docstring here. @Carmigna
     """
     data = []
     col_names = ['num_nodes', 'num_edges', 'num_layers']
@@ -251,6 +245,9 @@ def _repr(obj) -> str:
 
 #A simple metrics Plotter
 def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metrics_GNN.pdf'):
+    """
+    Need a docstring here @Carmigna
+    """
     y_pred1, y_true1 = (odd1 > odd_th), (tdd1 > tdd_th) 
     y_pred2, y_true2 = (odd2 > odd_th), (tdd2 > tdd_th)
     accuracy1  = sklearn.metrics.accuracy_score(y_true1, y_pred1)
