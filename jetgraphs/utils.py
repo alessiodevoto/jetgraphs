@@ -162,11 +162,11 @@ def dataset_to_pandas(dataset : Iterable, filter : Callable = lambda x : True):
   
     for elem in dataset:
         if filter(elem):
-          g = [elem.y.item(), elem.x.numpy()]
+          g = [elem.y.item(), elem.x.numpy(), elem.edge_attr.numpy(), elem.edge_index.numpy()]
           data.append(g)
 
     df = pd.DataFrame(data)
-    df.columns = ['class', 'node features']
+    df.columns = ['class', 'node features', 'edge_features', 'edge_attributes']
 
     return df
 
