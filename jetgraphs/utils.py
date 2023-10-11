@@ -115,6 +115,8 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     Returns:
     - a pandas dataframe 
     - a dataset name (str)
+
+    To be used with any JetGraphDataset graph 
     """
     data = []
     col_names = ['y', 'num_nodes', 'num_edges']
@@ -147,6 +149,8 @@ def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     Returns:
     - a Pandas DataFrame
     - a dataset name (str)
+
+    Same as the previous function but only used for Saliency Maps graphs slightly different format that JetGraphDataset graphs  
     """
     data = []
     col_names = ['num_nodes', 'num_edges', 'num_layers']
@@ -251,6 +255,14 @@ def _repr(obj) -> str:
 
 #A simple metrics Plotter
 def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metrics_GNN.pdf'):
+    """
+    This function takes in the scores and truths arrays of two N models and outputs some informative metrics
+    odd1: scores array of first model
+    tdd1: truths array of first model
+    same for the second
+    odd_th: prediction threshold that separates Signal from background (usually fixed at both highest purity/efficiency intersection)
+    tdd_th: truth threshold wich can be any fraction > 0 and < 1 for binary classification
+    """
     y_pred1, y_true1 = (odd1 > odd_th), (tdd1 > tdd_th) 
     y_pred2, y_true2 = (odd2 > odd_th), (tdd2 > tdd_th)
     accuracy1  = sklearn.metrics.accuracy_score(y_true1, y_pred1)
