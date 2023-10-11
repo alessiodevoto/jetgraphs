@@ -12,6 +12,7 @@ import seaborn as sns
 import os
 import re
 import sklearn.metrics
+from typing import Callable
 
 """
 Here we have some utility functions to plot a single graph and analyse a jetgraph dataset. 
@@ -103,9 +104,6 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
       plt.close('all')
     
       
-    
-    
-    
 def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     """
     Export an iterable of graphs to a Pandas Dataframe. If no additional col_names are provided, 
@@ -140,17 +138,47 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
 
     return df
 
-def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
+
+def dataset_to_pandas(dataset : Iterable, filter : Callable = lambda x : True):
     """
-    Export an iterable of graphs to a Pandas DataFrame. If no additional col_names are provided,
-    then the pandas DataFrame will have a row for each graph in dataset,
-    with ['num_nodes', 'num_edges', 'num_layers'] columns.
+    Export an iterable of graphs to a Pandas Dataframe, filtering out some of the graphs.
+    The pandas dataframe will contain a row for each graph. 
+
+    Only the graphs for which the filter function returns true will be added to the DataFrame. 
+    If no filter function is provided, all the graphs will be added to the DataFrame.
+    
+    The columns will be:
+      - the graph.x attribute (a numpy.array)
+      - the graph.y attribute  (int)
 
     Returns:
     - a Pandas DataFrame
     - a dataset name (str)
 
+    Example:
+    >>> def is_interesting(graph):   # only return graphs with y == 0
+    >>>     return graph.y.item() == 0
+    >>> df = dataset_to_pandas(any_dataset_you_like, is_interesting)
+    >>> df.iloc[0,:]
+
+    """
+    data = []
+  
+    for elem in dataset:
+        if filter(elem):
+          g = [elem.y.item(), elem.x.numpy(), elem.edge_attr.numpy(), elem.edge_index.numpy()]
+          data.append(g)
+
+    df = pd.DataFrame(data)
+    df.columns = ['class', 'node features', 'edge_features', 'edge_attributes']
+
+    return df
+
+
+def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
+    """
     Same as the previous function but only used for Saliency Maps graphs slightly different format that JetGraphDataset graphs  
+    - a pandas Dataframe 
     """
     data = []
     col_names = ['num_nodes', 'num_edges', 'num_layers']
@@ -176,6 +204,7 @@ def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     df.columns = col_names
 
     return df
+
 
 def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path="", format='pdf'):
   """
@@ -245,15 +274,13 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
   else:
       plt.show()
 
+
 def _repr(obj) -> str:
     if obj is None:
         return 'None'
     return re.sub('(<.*?)\\s.*(>)', r'\1\2', obj.__repr__())
 
 
-
-
-#A simple metrics Plotter
 def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metrics_GNN.pdf'):
     """
     This function takes in the scores and truths arrays of two N models and outputs some informative metrics
@@ -262,6 +289,7 @@ def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metric
     same for the second
     odd_th: prediction threshold that separates Signal from background (usually fixed at both highest purity/efficiency intersection)
     tdd_th: truth threshold wich can be any fraction > 0 and < 1 for binary classification
+
     """
     y_pred1, y_true1 = (odd1 > odd_th), (tdd1 > tdd_th) 
     y_pred2, y_true2 = (odd2 > odd_th), (tdd2 > tdd_th)
