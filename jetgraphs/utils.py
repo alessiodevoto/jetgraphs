@@ -33,6 +33,8 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     :parameter ax : matplotlib axis
     """
 
+    # TODO maybe change to plotly https://plotly.com/python/v3/3d-network-graph/
+
     def layers_colormap(idx):
         if int(idx) > 4:
             raise AttributeError(f'Only 4 colors available for layer. {idx} is out of bound.')
