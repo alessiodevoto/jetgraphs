@@ -5,3 +5,4 @@ requirements.txt
 jetgraph_dataset_example.ipynb
 test_model.ipynb
 .DS_Store
+._*
