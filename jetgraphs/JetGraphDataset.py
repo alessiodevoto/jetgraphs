@@ -6,9 +6,9 @@ import deepdish as dd
 import glob
 import torch
 from torch_geometric.data import InMemoryDataset, download_url, Data
-from .utils import _repr
+from utils import _repr
 
-# @Carmigna edited these numbers
+
 TOTAL_GRAPHS = 199867 
 GRAPHS_IN_SIGNAL_SUBDIR = 99867
 GRAPHS_IN_NOISE_SUBDIR = 50000
@@ -124,7 +124,7 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
         
         data_list = []
         # Attributes to retrieve for each graph.
-        attributes = ["eta", "phi", "energy", "energyabs"] 
+        attributes = ["eta", "phi", "energy", "CNNscores", "energyabs"] 
     
         # There should be 3 subdirectories: Signal, Background 1 and Background 2.
         
@@ -153,33 +153,54 @@ class JetGraphDatasetInMemory_v2(InMemoryDataset):
                 # We are going to put in _nodes a tensor for each layer, of size (num_nodes_in_layer, num_attributes + 1).
                 # The +1 stems from the column that points out the node layer.
                 _nodes = []
+                _nodes2 = []
                 for layer in range(0,4):
                     # We are going to put in _layer_nodes a tensor for each attribute, of size (num_nodes_in_layer, 1).
                     _layer_nodes = []
+                    _layer_nodes2 = []
                     for attribute in attributes:
-                        _layer_nodes.append(torch.tensor(list(dataset_by_layer[layer][attribute][gid].values())))
+                        if attribute != "CNNscores":
+                            _layer_nodes.append(torch.tensor(list(dataset_by_layer[layer][attribute][gid].values())))
+                        else:
+                            _layer_nodes2.append(torch.tensor(list(dataset_by_layer[layer][attribute][gid])))
                     # Add layer id, it must be in position 3 of list to comply with older schema.
                     _layer_nodes.insert(2, torch.ones_like(_layer_nodes[-1])*layer)
                     # Build graph layer attributes, of size (num_nodes_in_layer, num_attributes).
+                    # layer_nodes = []
+                    # for i, node in enumerate(_layer_nodes):
+                    #     if i == 2:
+                    #         new_node = torch.ones_like(_layer_nodes[-1]) * layer
+                    #         layer_nodes.append(new_node)
+                    #     layer_nodes.append(node)
+
                     layer_nodes = torch.cat(_layer_nodes, dim=-1)
+                    layer_nodes2 = torch.cat(_layer_nodes2, dim=-1)
                     _nodes.append(layer_nodes)
+                    _nodes2.append(layer_nodes2)
+                    #layer_nodes = torch.cat(_layer_nodes, dim=-1)
+                    #_nodes.append(layer_nodes)
                 # Stack 4 layers, to get graph of size (num_nodes_in_graph, num_attributes).
                 nodes = torch.cat(_nodes, dim=0)
+                nodes2 = torch.cat(_nodes2, dim=0)
                 
                 # Filter out nodes based on conditions.
                 # So far the only condition is energyabs <= 400.
                 invalid_nodes_mask = (nodes[:, -1] <= 400) 
-                nodes = nodes[~invalid_nodes_mask]    
+                nodes = nodes[~invalid_nodes_mask] 
+                nodes2 = nodes2[~invalid_nodes_mask] 
+
                 
                 # If no nodes are left after deleting unwanted, just skip this graph.
-                if nodes.shape[0] == 0:
+                if nodes.shape[0] == 0 or nodes2.shape[0] == 0:
                     continue
                 
                 # Finally create and append graph to list.
                 graph_class = 0 if is_noise else 1
+                # Attach CNN scores
+                CNNscores = nodes2[0].item()
                 # Last column is absolute energy, not useful from now, so we delete it.
                 nodes = nodes[:,:-1]
-                graph = Data(x=nodes, edge_attr=None, edge_index=None, y=graph_class, id=str(gid))
+                graph = Data(x=nodes, edge_attr=None, edge_index=None, y=graph_class, id=str(gid), CNNscores = CNNscores)
                 data_list.append(graph)
                 
             print(f"[Preprocessing] Done preprocessing files in {subdir}")

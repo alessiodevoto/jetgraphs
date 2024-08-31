@@ -32,9 +32,8 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     :parameter energy_is_size: whether to make nodes with higher energy bigger
     :parameter ax : matplotlib axis
     """
-
-    # TODO maybe change to plotly https://plotly.com/python/v3/3d-network-graph/
-
+    # Detach and move tensors to CPU
+    
     def layers_colormap(idx):
         if int(idx) > 4:
             raise AttributeError(f'Only 4 colors available for layer. {idx} is out of bound.')
@@ -42,14 +41,14 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
         return colors[int(idx)]
     
 
-    if g.x.shape[1] == 7:
+    if  g.x.detach().cpu().numpy().shape[1] == 7:
       from .transforms import OneHotDecodeLayer
       g = OneHotDecodeLayer()(g)
     
-    assert g.x.shape[1] == 4, "The provided graph must have either 7 or 4 node features."
+    assert  g.x.detach().cpu().numpy().shape[1] == 4, "The provided graph must have either 7 or 4 node features."
 
 
-    num_nodes = g.x.shape[0]
+    num_nodes =  g.x.detach().cpu().numpy().shape[0]
 
     # 3D network plot
     with plt.style.context(('ggplot')):
@@ -63,11 +62,11 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
         
         # Loop on the adjacency matrix to extract the x,y,z coordinates of each node 
         for idx in range(num_nodes):
-            xi = g.x[idx, 0]
-            yi = g.x[idx, 1]
-            zi = g.x[idx, 2]
-            ci = g.x[idx, 2]            # layer is represented as color
-            ei = g.x[idx, 3] *500    # energy is represented as size
+            xi =  g.x.detach().cpu().numpy()[idx, 0]
+            yi =  g.x.detach().cpu().numpy()[idx, 1]
+            zi =  g.x.detach().cpu().numpy()[idx, 2]
+            ci =  g.x.detach().cpu().numpy()[idx, 2]            # layer is represented as color
+            ei =  g.x.detach().cpu().numpy()[idx, 3] *500    # energy is represented as size
             
             # Scatter plot
             size = ei.item() if energy_is_size else matplotlib.rcParams['lines.markersize'] ** 2
@@ -76,14 +75,14 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
         
         # Loop on the list of edges to get the x,y,z, coordinates of the connected nodes
         # Those two points are the extrema of the line to be plotted
-        for i in range(g.edge_index.shape[1]):
+        for i in range( g.edge_index.detach().cpu().numpy().shape[1]):
         
-            src = g.edge_index[0, i]
-            dst = g.edge_index[1, i]
+            src = g.edge_index[0, i].detach().cpu().numpy()
+            dst = g.edge_index[1, i].detach().cpu().numpy()
 
-            x = np.array((g.x[src, 0], g.x[dst, 0]))
-            y = np.array((g.x[src, 1], g.x[dst, 1]))
-            z = np.array((g.x[src, 2], g.x[dst, 2]))
+            x = np.array((g.x[src, 0].detach().cpu().numpy(), g.x[dst, 0].detach().cpu().numpy()))
+            y = np.array((g.x[src, 1].detach().cpu().numpy(), g.x[dst, 1].detach().cpu().numpy()))
+            z = np.array((g.x[src, 2].detach().cpu().numpy(), g.x[dst, 2].detach().cpu().numpy()))
         
             # Plot the connecting lines
             ax.plot(x, y, z, c='black', alpha=0.5)
@@ -103,9 +102,12 @@ def plot_jet_graph(g, angle=30, elev=10, ax=None, color_layers=True, energy_is_s
     # Save or display right away
     if save_to_path is not False:
       plt.savefig(save_to_path)
-      plt.close('all')
+      #plt.close('all')
     
       
+    
+    
+    
 def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     """
     Export an iterable of graphs to a Pandas Dataframe. If no additional col_names are provided, 
@@ -115,8 +117,6 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     Returns:
     - a pandas dataframe 
     - a dataset name (str)
-
-    To be used with any JetGraphDataset graph 
     """
     data = []
     col_names = ['y', 'num_nodes', 'num_edges']
@@ -139,7 +139,6 @@ def stats_to_pandas(dataset : Iterable, additional_col_names=[]):
     df.rename(columns={'y': 'class'}, inplace=True)
 
     return df
-
 
 def dataset_to_pandas(dataset : Iterable, filter : Callable = lambda x : True):
     """
@@ -176,14 +175,18 @@ def dataset_to_pandas(dataset : Iterable, filter : Callable = lambda x : True):
 
     return df
 
-
 def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     """
-    Same as the previous function but only used for Saliency Maps graphs slightly different format that JetGraphDataset graphs  
-    - a pandas Dataframe 
+    Export an iterable of graphs to a Pandas DataFrame. If no additional col_names are provided,
+    then the pandas DataFrame will have a row for each graph in dataset,
+    with ['num_nodes', 'num_edges', 'num_layers'] columns.
+
+    Returns:
+    - a Pandas DataFrame
+    - a dataset name (str)
     """
     data = []
-    col_names = ['num_nodes', 'num_edges', 'num_layers']
+    col_names = ['num_nodes', 'num_edges', 'num_layers','node features', 'edge_attributes']
     col_names.extend(additional_col_names)
 
     # Horrible:
@@ -191,13 +194,15 @@ def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     col_names.extend(inferred_col_names)
 
     for elem in dataset:
-        x, edge_index, _, _ = elem.x, elem.edge_index, elem.node_mask, elem.edge_mask
+        x, edge_index = elem.x, elem.edge_index#, elem.node_mask, elem.edge_mask
 
         num_nodes = x.shape[0] if x is not None else 0
         num_edges = edge_index.shape[1] if edge_index is not None else 0
         num_layers = x[:,2].unique().size()[0]
+        node_features = x.detach().cpu().numpy()
+        edge_attributes = edge_index.detach().cpu().numpy()
 
-        g = [num_nodes, num_edges, num_layers]
+        g = [num_nodes, num_edges, num_layers, node_features, edge_attributes]
         g.extend([elem.get(col) for col in additional_col_names])
         g.extend([elem.get(col) for col in inferred_col_names])
         data.append(g)
@@ -206,7 +211,6 @@ def stats_to_pandasSM(dataset: Iterable, additional_col_names=[]):
     df.columns = col_names
 
     return df
-
 
 def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False, exclude_cols: Iterable = False, separate_classes: bool = False, save_to_path="", format='pdf'):
   """
@@ -276,23 +280,16 @@ def plot_dataset_info(df: DataFrame, title: str, include_cols : Iterable = False
   else:
       plt.show()
 
-
 def _repr(obj) -> str:
     if obj is None:
         return 'None'
     return re.sub('(<.*?)\\s.*(>)', r'\1\2', obj.__repr__())
 
 
-def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metrics_GNN.pdf'):
-    """
-    This function takes in the scores and truths arrays of two N models and outputs some informative metrics
-    odd1: scores array of first model
-    tdd1: truths array of first model
-    same for the second
-    odd_th: prediction threshold that separates Signal from background (usually fixed at both highest purity/efficiency intersection)
-    tdd_th: truth threshold wich can be any fraction > 0 and < 1 for binary classification
 
-    """
+
+#A simple metrics Plotter
+def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metrics_GNN.pdf'):
     y_pred1, y_true1 = (odd1 > odd_th), (tdd1 > tdd_th) 
     y_pred2, y_true2 = (odd2 > odd_th), (tdd2 > tdd_th)
     accuracy1  = sklearn.metrics.accuracy_score(y_true1, y_pred1)
@@ -301,14 +298,9 @@ def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metric
     accuracy2  = sklearn.metrics.accuracy_score(y_true2, y_pred2)
     precision2 = sklearn.metrics.precision_score(y_true2, y_pred2)
     recall2    = sklearn.metrics.recall_score(y_true2, y_pred2)
-
-    print('Accuracy GNN:            %.4f' % accuracy1)
-    print('Precision (purity) GNN:  %.4f' % precision1)
-    print('Recall (efficiency) GNN: %.4f' % recall1)
-
-    print('Accuracy CNN:            %.4f' % accuracy2)
-    print('Precision (purity) CNN:  %.4f' % precision2)
-    print('Recall (efficiency) CNN: %.4f' % recall2)
+    f11 = sklearn.metrics.f1_score(y_true1, y_pred1)
+    f12 = sklearn.metrics.f1_score(y_true2, y_pred2)
+    
 
     fpr1, tpr1, _ = sklearn.metrics.roc_curve(y_true1, odd1)
     fpr2, tpr2, _ = sklearn.metrics.roc_curve(y_true2, odd2)
@@ -321,10 +313,10 @@ def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metric
     # Plot the model outputs
     # binning=dict(bins=50, range=(0,1), histtype='step', log=True)
     binning=dict(bins=50, histtype='step', log=True)
-    ax0.hist(odd1[y_true1==False], lw=2, label='GNN Background', **binning)
-    ax0.hist(odd1[y_true1], lw=2, label='GNN Signal', **binning)
-    ax0.hist(odd2[y_true2==False], lw=2, label='CNN Background', **binning)
-    ax0.hist(odd2[y_true2], lw=2, label='CNN Signal', **binning)
+    ax0.hist(odd1[y_true1==False], density = True, lw=2, label='GCN Background', **binning)
+    ax0.hist(odd1[y_true1], density = True, lw=2, label='GCN Signal', **binning)
+    ax0.hist(odd2[y_true2==False], density = True, lw=2, label=' ARMA Background', **binning)
+    ax0.hist(odd2[y_true2], density = True, lw=2, label=' ARMA Signal', **binning)
     ax0.set_xlabel('Model output', fontsize=14)
     #ax0.set_title('Accuracy = %.4f' % accuracy, fontsize=14)
     ax0.tick_params(width=2, grid_alpha=0.5, labelsize=12)
@@ -333,32 +325,44 @@ def plot_metrics(odd1, tdd1, odd2, tdd2, odd_th=0.5, tdd_th=0.5, outname='metric
     # Plot the ROC curve
     auc1 = sklearn.metrics.auc(fpr1, tpr1)
     auc2 = sklearn.metrics.auc(fpr2, tpr2)
+    
     ax1.plot(fpr1, tpr1, lw=2)
     ax1.plot(fpr2, tpr2, lw=2)
     ax1.plot([0, 1], [0, 1], '--', lw=2)
     ax1.set_xlabel('False positive rate', fontsize=14)
     ax1.set_ylabel('True positive rate', fontsize=14)
-    ax1.set_title('AUC GNN = %.4f, CNN = %.4f' % (auc1,auc2), fontsize=14)
+    ax1.set_title('AUC GCN = %.4f,  ARMA = %.4f' % (auc1,auc2), fontsize=14)
     ax1.tick_params(width=2, grid_alpha=0.5, labelsize=12)
 
     p1, r1, t1 = sklearn.metrics.precision_recall_curve(y_true1, odd1)
     p2, r2, t2 = sklearn.metrics.precision_recall_curve(y_true2, odd2)
-    ax2.plot(t1, p1[:-1], label='GNN purity', lw=2)
-    ax2.plot(t1, r1[:-1], label='GNN efficiency', lw=2)
-    ax2.plot(t2, p2[:-1], label='CNN purity', lw=2)
-    ax2.plot(t2, r2[:-1], label='CNN efficiency', lw=2)
+    ax2.plot(t1, p1[:-1], label='GCN purity', lw=2)
+    ax2.plot(t1, r1[:-1], label='GCN efficiency', lw=2)
+    ax2.plot(t2, p2[:-1], label=' ARMA purity', lw=2)
+    ax2.plot(t2, r2[:-1], label=' ARMA efficiency', lw=2)
     ax2.set_xlabel('Cut on model score', fontsize=14)
     #ax2.set_title('Purity (Precision) = %.4f' % precision, fontsize=14) 
     ax2.tick_params(width=2, grid_alpha=0.5, labelsize=12)
     ax2.legend(fontsize=14)
 
-    ax3.plot(p1, r1, label='GNN', lw=2)
-    ax3.plot(p2, r2, label='CNN', lw=2)
+    ax3.plot(p1, r1, label='GCN', lw=2)
+    ax3.plot(p2, r2, label=' ARMA', lw=2)
     ax3.set_xlabel('Purity', fontsize=14)
     ax3.set_ylabel('Efficiency', fontsize=14)
     #ax3.set_title('Efficiency (Recall) = %.4f' % recall, fontsize=14)
     ax3.tick_params(width=2, grid_alpha=0.5, labelsize=12)
 
-    plt.show()
+    #plt.show()
     plt.savefig(outname)
-    plt.close('all')
+    #plt.close('all')
+    print('Accuracy ARMA:            %.4f' % accuracy2)
+    print('AUC score ARMA:            %.4f' % auc2)
+    print('f1 score ARMA:            %.4f' % f12)
+    print('Precision (purity) ARMA:  %.4f' % precision2)
+    print('Recall (efficiency) ARMA: %.4f' % recall2)
+
+    print('Accuracy  GCN:            %.4f' % accuracy1)
+    print('AUC score  GCN:            %.4f' % auc1)
+    print('f1 score  GCN:            %.4f' % f11)
+    print('Precision (purity)  GCN:  %.4f' % precision1)
+    print('Recall (efficiency)  GCN: %.4f' % recall1)
