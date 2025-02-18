@@ -6,7 +6,7 @@ setup(
     author='Alessio Devoto',
     packages=['jetgraphs'],
     install_requires=[
-        'numpy',
+        'numpy==1.26.4',
         'matplotlib==3.5.1',
         'networkx',
         'pytorch_lightning',
